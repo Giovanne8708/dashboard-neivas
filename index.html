@@ -17,6 +17,12 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Firebase App SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <!-- Firebase Firestore SDK (Banco de Dados em Nuvem) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -277,7 +283,7 @@
                     <div>
                         <h2 class="text-2xl font-black text-slate-800 dark:text-white">Visão Geral</h2>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Última sincronização: <span id="lastSync">Agora mesmo</span>
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Última sincronização: <span id="lastSync">Sincronizado na Nuvem</span>
                         </p>
                     </div>
                     <!-- Quick Search -->
@@ -334,8 +340,8 @@
                 <!-- Quick Access / Illustration -->
                 <div class="bg-gradient-to-r from-brand to-brandHover rounded-2xl p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="relative z-10">
-                        <h3 class="text-xl font-black mb-2">Bem-vindo ao Novo Dashboard</h3>
-                        <p class="text-sm text-blue-100 max-w-lg">Utilize o menu lateral para navegar entre os módulos de Pedidos, Financeiro e Compras. Todos os seus dados estão seguros no armazenamento local.</p>
+                        <h3 class="text-xl font-black mb-2">Bem-vindo ao Novo Dashboard Nuvem</h3>
+                        <p class="text-sm text-blue-100 max-w-lg">Seus dados agora estão salvos com segurança no Firebase. Acesse de qualquer dispositivo utilizando seu login.</p>
                         <button onclick="switchTab('pedidos')" class="mt-6 bg-white text-brand px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-md inline-flex items-center gap-2">
                             Acessar Pedidos <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>
@@ -536,7 +542,7 @@
                 <h3 class="text-xl font-black text-danger">Zerar Sistema</h3>
             </div>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-5 font-medium leading-relaxed">
-                Esta ação é <strong class="text-slate-800 dark:text-slate-200">irreversível</strong>. Todos os pedidos, compras e pagamentos serão apagados. Insira a senha de administrador para confirmar:
+                Esta ação é <strong class="text-slate-800 dark:text-slate-200">irreversível</strong>. Todos os pedidos, compras e pagamentos na nuvem serão apagados. Insira a senha de administrador para confirmar:
             </p>
             <div class="relative mb-6">
                 <i data-lucide="lock" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5"></i>
@@ -571,13 +577,25 @@
 
     <!-- ================= JAVASCRIPT ================= -->
     <script>
+        // Configuração do Firebase com suas chaves reais
+        const firebaseConfig = {
+            apiKey: "AIzaSyBd7z1IXeKOb1nbSsPblSagsFDO_PxbGbU",
+            authDomain: "dashboard-neivas.firebaseapp.com",
+            projectId: "dashboard-neivas",
+            storageBucket: "dashboard-neivas.firebasestorage.app",
+            messagingSenderId: "225717775012",
+            appId: "1:225717775012:web:b47dd44c9e906c5b7e1431",
+            measurementId: "G-52R27XFXMR"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Tratamento de Erro Discreto para Imagens
         window.addEventListener('error', function(e) {
             if (e.target && e.target.tagName === 'IMG') {
-                console.warn('Aviso discreto: A logo ou imagem não foi encontrada no caminho especificado (' + e.target.src + '). Certifique-se de que o arquivo existe na mesma pasta.');
-            }
-            if (e.target && e.target.tagName === 'LINK' && e.target.rel === 'icon') {
-                console.warn('Aviso discreto: Favicon não encontrado.');
+                console.warn('Aviso discreto: A logo ou imagem não foi encontrada no caminho especificado.');
             }
         }, true);
 
@@ -589,9 +607,9 @@
             { email: 'operacional@neivas.com', senha: '123' }
         ];
 
-        let pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
-        let pagamentos = JSON.parse(localStorage.getItem('pagamentos')) || [];
-        let compras = JSON.parse(localStorage.getItem('compras')) || [];
+        let pedidos = [];
+        let pagamentos = [];
+        let compras = [];
         const todayStr = new Date().toISOString().split('T')[0];
 
         // UI Helpers
@@ -609,7 +627,6 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('userEmailDisplayHeader').innerText = logado;
                 
-                // Set Admin Initials
                 const initial = logado.substring(0, 2).toUpperCase();
                 document.querySelector('.bg-gradient-to-tr').innerText = initial;
             }
@@ -628,14 +645,46 @@
 
             lucide.createIcons();
             
-            // Render UI
-            switchTab('dashboard'); // Default
-            renderAll();
-            checkNotifications();
+            // Render UI & Sincronizar dados do Firebase em tempo real
+            switchTab('dashboard');
+            iniciarSincronizacaoNuvem();
         });
 
         // ==========================================
-        // 2. FUNÇÕES DE LOGIN & UI EXTRAS
+        // 2. SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE)
+        // ==========================================
+        function iniciarSincronizacaoNuvem() {
+            // Sincronizar Pedidos
+            db.collection('pedidos').onSnapshot((snapshot) => {
+                pedidos = [];
+                snapshot.forEach((doc) => {
+                    pedidos.push({ idDoc: doc.id, ...doc.data() });
+                });
+                renderAll();
+                checkNotifications();
+            });
+
+            // Sincronizar Pagamentos / Financeiro
+            db.collection('pagamentos').onSnapshot((snapshot) => {
+                pagamentos = [];
+                snapshot.forEach((doc) => {
+                    pagamentos.push({ idDoc: doc.id, ...doc.data() });
+                });
+                renderAll();
+            });
+
+            // Sincronizar Compras
+            db.collection('compras').onSnapshot((snapshot) => {
+                compras = [];
+                snapshot.forEach((doc) => {
+                    compras.push({ idDoc: doc.id, ...doc.data() });
+                });
+                renderAll();
+            });
+        }
+
+        // ==========================================
+        // 3. FUNÇÕES DE LOGIN & UI EXTRAS
         // ==========================================
         function fazerLogin(e) {
             e.preventDefault();
@@ -738,43 +787,22 @@
             }
         }
 
-        // ==========================================
-        // 3. LÓGICA PRINCIPAL DO SISTEMA (MANTIDA)
-        // ==========================================
-        function salvarDados() {
-            localStorage.setItem('pedidos', JSON.stringify(pedidos));
-            localStorage.setItem('pagamentos', JSON.stringify(pagamentos));
-            localStorage.setItem('compras', JSON.stringify(compras));
-            
-            const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute:'2-digit' });
-            document.getElementById('lastSync').innerText = `Hoje às ${time}`;
-            
-            renderAll();
-            checkNotifications();
-            showToast("Dados salvos e sincronizados.", "success");
-        }
-
         function switchTab(tabId) {
-            // Hide all contents
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
             
-            // Reset Sidebar Buttons
             document.querySelectorAll('.nav-btn').forEach(el => {
                 el.classList.remove('bg-blue-50', 'dark:bg-brand/20', 'text-brand', 'dark:text-blue-400');
                 el.classList.add('text-slate-600', 'dark:text-slate-400');
             });
             
-            // Active Sidebar Button
             const activeNav = document.getElementById(`nav-${tabId}`);
             if(activeNav) {
                 activeNav.classList.remove('text-slate-600', 'dark:text-slate-400');
                 activeNav.classList.add('bg-blue-50', 'dark:bg-brand/20', 'text-brand', 'dark:text-blue-400');
             }
             
-            // Breadcrumb
             document.getElementById('breadcrumbAtual').innerText = breadcrumbNames[tabId] || 'Dashboard';
-            
             toggleMobileSidebar(true);
             document.getElementById('mainScroll').scrollTo(0,0);
         }
@@ -787,9 +815,12 @@
             document.getElementById('c_faturamento_calc').value = `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}`;
         }
 
+        // ==========================================
+        // 4. OPERAÇÕES DE GRAVAÇÃO NO FIREBASE
+        // ==========================================
         function addPedido(e) {
             e.preventDefault();
-            pedidos.push({
+            const novoPedido = {
                 id: Date.now(),
                 serie: document.getElementById('p_serie').value,
                 op: document.getElementById('p_op').value,
@@ -806,27 +837,33 @@
                 mecanico_ok: false,
                 status: 'Pendente',
                 motivo: ''
-            });
-            document.getElementById('formPedido').reset();
-            salvarDados();
+            };
+
+            db.collection('pedidos').add(novoPedido).then(() => {
+                document.getElementById('formPedido').reset();
+                showToast("Pedido salvo na nuvem com sucesso!", "success");
+            }).catch(err => showToast("Erro ao salvar pedido: " + err.message, "error"));
         }
 
         function addPagamento(e) {
             e.preventDefault();
-            pagamentos.push({
+            const novoPagamento = {
                 id: Date.now(),
                 serie: document.getElementById('pag_serie').value,
                 cliente: document.getElementById('pag_cliente').value,
                 data: document.getElementById('pag_data').value,
                 status: 'Pendente'
-            });
-            document.getElementById('formPagamento').reset();
-            salvarDados();
+            };
+
+            db.collection('pagamentos').add(novoPagamento).then(() => {
+                document.getElementById('formPagamento').reset();
+                showToast("Lembrete financeiro salvo na nuvem!", "success");
+            }).catch(err => showToast("Erro: " + err.message, "error"));
         }
 
         function addCompra(e) {
             e.preventDefault();
-            compras.push({
+            const novaCompra = {
                 id: Date.now(),
                 serie: document.getElementById('c_serie').value,
                 fornecedor: document.getElementById('c_fornecedor').value,
@@ -834,48 +871,44 @@
                 entrega: document.getElementById('c_entrega').value,
                 faturamento_calc: document.getElementById('c_faturamento_calc').value,
                 status: 'Pendente'
-            });
-            document.getElementById('formCompra').reset();
-            salvarDados();
+            };
+
+            db.collection('compras').add(novaCompra).then(() => {
+                document.getElementById('formCompra').reset();
+                showToast("Compra salva na nuvem com sucesso!", "success");
+            }).catch(err => showToast("Erro: " + err.message, "error"));
         }
 
-        function updateStatusPedido(id, val) {
-            const index = pedidos.findIndex(p => p.id === id);
-            pedidos[index].status = val;
-            if(val !== 'Não Entregue') pedidos[index].motivo = '';
-            salvarDados();
+        function updateStatusPedido(idDoc, val) {
+            const p = pedidos.find(item => item.idDoc === idDoc);
+            let updateData = { status: val };
+            if(val !== 'Não Entregue') updateData.motivo = '';
+            
+            db.collection('pedidos').doc(idDoc).update(updateData);
         }
 
-        function updateMotivoPedido(id, val) {
-            const index = pedidos.findIndex(p => p.id === id);
-            pedidos[index].motivo = val;
-            salvarDados();
+        function updateMotivoPedido(idDoc, val) {
+            db.collection('pedidos').doc(idDoc).update({ motivo: val });
         }
 
-        function toggleEtapa(id, campo, isChecked) {
-            const index = pedidos.findIndex(p => p.id === id);
-            pedidos[index][campo] = isChecked;
-            salvarDados();
+        function toggleEtapa(idDoc, campo, isChecked) {
+            db.collection('pedidos').doc(idDoc).update({ [campo]: isChecked });
         }
 
-        function updateStatusGeral(lista, id, val) {
-            let arr = lista === 'pagamentos' ? pagamentos : compras;
-            const index = arr.findIndex(i => i.id === id);
-            arr[index].status = val;
-            salvarDados();
+        function updateStatusGeral(colecao, idDoc, val) {
+            db.collection(colecao).doc(idDoc).update({ status: val });
         }
 
-        function apagarItem(lista, id) {
-            showModal('Confirmar Exclusão', 'Tem certeza que deseja apagar permanentemente este registro?', true, () => {
-                if(lista === 'pedidos') pedidos = pedidos.filter(p => p.id !== id);
-                if(lista === 'pagamentos') pagamentos = pagamentos.filter(p => p.id !== id);
-                if(lista === 'compras') compras = compras.filter(p => p.id !== id);
-                salvarDados();
+        function apagarItem(colecao, idDoc) {
+            showModal('Confirmar Exclusão', 'Tem certeza que deseja apagar este registro da nuvem?', true, () => {
+                db.collection(colecao).doc(idDoc).delete().then(() => {
+                    showToast("Registro apagado com sucesso!", "success");
+                });
             });
         }
 
         // ==========================================
-        // 4. FUNÇÕES ERP REUTILIZÁVEIS (AUTOCOMPLETE)
+        // 5. FUNÇÕES ERP REUTILIZÁVEIS (AUTOCOMPLETE)
         // ==========================================
         function filtrarPedidos(termo) {
             const query = termo.toUpperCase();
@@ -944,7 +977,7 @@
         }
 
         // ==========================================
-        // 5. RENDERIZAÇÃO E FORMATAÇÃO (V2.0)
+        // 6. RENDERIZAÇÃO E FORMATAÇÃO (V2.0)
         // ==========================================
         function formatData(dataISO) {
             if(!dataISO) return '-';
@@ -1034,13 +1067,13 @@
                     const colorClass = getSelectColorClass(p.status);
                     
                     let statusHtml = `
-                        <select onchange="updateStatusPedido(${p.id}, this.value)" class="mt-1 border rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer outline-none transition-colors w-full ${colorClass}">
+                        <select onchange="updateStatusPedido('${p.idDoc}', this.value)" class="mt-1 border rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer outline-none transition-colors w-full ${colorClass}">
                             <option value="Pendente" ${p.status === 'Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
                             <option value="Entregue" ${p.status === 'Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option>
                             <option value="Não Entregue" ${p.status === 'Não Entregue'?'selected':''} class="text-slate-800">🔴 Não Entregue</option>
                         </select>
                     `;
-                    let motivoHtml = p.status === 'Não Entregue' ? `<div class="mt-3"><div class="text-[10px] uppercase font-bold text-danger mb-1">Motivo:</div><textarea placeholder="Escreva o motivo..." onchange="updateMotivoPedido(${p.id}, this.value)" class="border border-danger/30 bg-danger/5 rounded-lg p-2 w-full text-xs focus:outline-none focus:ring-1 focus:ring-danger text-slate-700 dark:text-slate-300 placeholder-danger/50 resize-none h-16">${p.motivo}</textarea></div>` : '';
+                    let motivoHtml = p.status === 'Não Entregue' ? `<div class="mt-3"><div class="text-[10px] uppercase font-bold text-danger mb-1">Motivo:</div><textarea placeholder="Escreva o motivo..." onchange="updateMotivoPedido('${p.idDoc}', this.value)" class="border border-danger/30 bg-danger/5 rounded-lg p-2 w-full text-xs focus:outline-none focus:ring-1 focus:ring-danger text-slate-700 dark:text-slate-300 placeholder-danger/50 resize-none h-16">${p.motivo}</textarea></div>` : '';
 
                     tPedidos.innerHTML += `
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
@@ -1057,9 +1090,9 @@
                             </td>
                             <td class="px-4 py-4 min-w-[220px] align-top">
                                 <div class="space-y-1.5">
-                                    ${ p.d_envio ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa(${p.id}, 'envio_ok', this.checked)" ${p.envio_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_envio, p.envio_ok)} w-full flex justify-between"><span>Envio</span> <span class="font-bold font-mono">${formatData(p.d_envio)}</span></span></label>` : '' }
-                                    ${ p.d_eletrico ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa(${p.id}, 'eletrico_ok', this.checked)" ${p.eletrico_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_eletrico, p.eletrico_ok)} w-full flex justify-between"><span>Elétrico</span> <span class="font-bold font-mono">${formatData(p.d_eletrico)}</span></span></label>` : '' }
-                                    ${ p.d_mecanico ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa(${p.id}, 'mecanico_ok', this.checked)" ${p.mecanico_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_mecanico, p.mecanico_ok)} w-full flex justify-between"><span>Mecânico</span> <span class="font-bold font-mono">${formatData(p.d_mecanico)}</span></span></label>` : '' }
+                                    ${ p.d_envio ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa('${p.idDoc}', 'envio_ok', this.checked)" ${p.envio_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_envio, p.envio_ok)} w-full flex justify-between"><span>Envio</span> <span class="font-bold font-mono">${formatData(p.d_envio)}</span></span></label>` : '' }
+                                    ${ p.d_eletrico ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa('${p.idDoc}', 'eletrico_ok', this.checked)" ${p.eletrico_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_eletrico, p.eletrico_ok)} w-full flex justify-between"><span>Elétrico</span> <span class="font-bold font-mono">${formatData(p.d_eletrico)}</span></span></label>` : '' }
+                                    ${ p.d_mecanico ? `<label class="flex items-center space-x-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"><input type="checkbox" onchange="toggleEtapa('${p.idDoc}', 'mecanico_ok', this.checked)" ${p.mecanico_ok?'checked':''} class="rounded text-brand w-4 h-4 accent-brand border-slate-300"> <span class="${getEtapaClass(p.d_mecanico, p.mecanico_ok)} w-full flex justify-between"><span>Mecânico</span> <span class="font-bold font-mono">${formatData(p.d_mecanico)}</span></span></label>` : '' }
                                 </div>
                             </td>
                             <td class="px-4 py-4 min-w-[180px] align-top bg-slate-50/50 dark:bg-slate-800/20 border-l border-slate-100 dark:border-slate-800/50">
@@ -1068,7 +1101,7 @@
                                 ${statusHtml}${motivoHtml}
                             </td>
                             <td class="px-4 py-4 text-center align-middle">
-                                <button onclick="apagarItem('pedidos', ${p.id})" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
+                                <button onclick="apagarItem('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
                                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                                 </button>
                             </td>
@@ -1090,13 +1123,13 @@
                             <td class="px-4 py-4 font-bold text-slate-800 dark:text-slate-200">${p.cliente}</td>
                             ${renderCellEntrega(p.data, p.status)}
                             <td class="px-4 py-4">
-                                <select onchange="updateStatusGeral('pagamentos', ${p.id}, this.value)" class="border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
+                                <select onchange="updateStatusGeral('pagamentos', '${p.idDoc}', this.value)" class="border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
                                     <option value="Pendente" ${p.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
                                     <option value="Pago" ${p.status==='Pago'?'selected':''} class="text-slate-800">🟢 Pago</option>
                                 </select>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <button onclick="apagarItem('pagamentos', ${p.id})" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                                <button onclick="apagarItem('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                             </td>
                         </tr>
                     `;
@@ -1118,7 +1151,7 @@
                             ${renderCellCompra(c.entrega, c.status === 'Entregue' || c.status === 'Faturado e Entregue', '')}
                             ${renderCellCompra(c.faturamento_calc, c.status === 'Faturado' || c.status === 'Faturado e Entregue', 'Fat.')}
                             <td class="px-4 py-4">
-                                <select onchange="updateStatusGeral('compras', ${c.id}, this.value)" class="border rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
+                                <select onchange="updateStatusGeral('compras', '${c.idDoc}', this.value)" class="border rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
                                     <option value="Pendente" ${c.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
                                     <option value="Faturado" ${c.status==='Faturado'?'selected':''} class="text-slate-800">🔵 Faturado</option>
                                     <option value="Entregue" ${c.status==='Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option>
@@ -1126,14 +1159,13 @@
                                 </select>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <button onclick="apagarItem('compras', ${c.id})" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                                <button onclick="apagarItem('compras', '${c.idDoc}')" class="text-slate-300 hover:text-danger p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                             </td>
                         </tr>
                     `;
                 });
             }
 
-            // Always recreate icons after innerHTML injection
             lucide.createIcons();
         }
 
@@ -1183,7 +1215,7 @@
         }
 
         // ==========================================
-        // 6. TOASTS E ALERTAS V2.0
+        // 7. TOASTS E ALERTAS V2.0
         // ==========================================
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -1220,8 +1252,6 @@
         }
 
         let alertasGlobais = [];
-        let alertIndex = 0;
-        let alertTimer = null;
 
         function checkNotifications() {
             let alertas = [];
@@ -1249,7 +1279,7 @@
         }
 
         // ==========================================
-        // 7. MODAIS
+        // 8. MODAIS
         // ==========================================
         let modalConfirmCallback = null;
         function showModal(title, message, isConfirm, callback = null) {
@@ -1273,8 +1303,9 @@
 
         function confirmAuth() {
             if (document.getElementById('authPassword').value === '123') {
-                localStorage.clear();
-                location.reload();
+                // Remove os dados do LocalStorage de login mas preserva a nuvem
+                showToast('Ação restrita. Utilize exclusões individuais na tabela.', 'warning');
+                document.getElementById('authModal').classList.add('hidden');
             } else {
                 showToast('Senha de administrador incorreta!', 'error');
             }
