@@ -101,7 +101,7 @@
         }
     </style>
 </head>
-<body class="bg-background text-text dark:bg-darkBg dark:text-darkText font-sans transition-colors duration-300 overflow-hidden flex h-screen">
+<body class="bg-background text-text dark:bg-darkBg dark:text-darkText font-sans transition-colors duration-300 overflow-hidden flex h-screen" onclick="fecharAutocompletesExternos(event)">
 
     <!-- ================= TELA DE LOGIN 2.0 ================= -->
     <div id="loginScreen" class="fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-br from-brand to-brandHover px-4 animate-fade-in transition-opacity duration-500">
@@ -417,8 +417,13 @@
                         </h2>
                     </div>
                     <form id="formPagamento" class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end" onsubmit="addPagamento(event)">
-                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° de Série</label><input required type="text" id="pag_serie" placeholder="Ex: 0000" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
-                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Nome do Cliente</label><input required type="text" id="pag_cliente" placeholder="Cliente" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <!-- AUTOCOMPLETE SÉRIE/CLIENTE FINANCEIRO -->
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° de Série / Cliente</label>
+                            <input required type="text" id="pag_serie" placeholder="Digite a série ou cliente..." autocomplete="off" oninput="filtrarAutocomplete('pagamentos', this.value)" onclick="mostrarAutocomplete('pagamentos')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all">
+                            <div id="dropdown-pagamentos" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
+                        </div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Nome do Cliente</label><input required type="text" id="pag_cliente" placeholder="Preenchimento automático" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"></div>
                         <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Data do Lembrete</label><input required type="date" id="pag_data" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand transition-all"></div>
                         <button type="submit" class="w-full bg-brand text-white rounded-lg px-6 py-2.5 font-bold text-sm shadow hover:shadow-lg hover:bg-brandHover transition-all flex items-center justify-center gap-2 h-[42px]">
                             <i data-lucide="save" class="w-4 h-4"></i> Salvar Lembrete
@@ -465,7 +470,12 @@
                         </h2>
                     </div>
                     <form id="formCompra" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5 items-end" onsubmit="addCompra(event)">
-                        <div class="lg:col-span-1"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° Série</label><input required type="text" id="c_serie" placeholder="Ex: 1234" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <!-- AUTOCOMPLETE SÉRIE/CLIENTE COMPRAS -->
+                        <div class="lg:col-span-1 relative">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° Série</label>
+                            <input required type="text" id="c_serie" placeholder="Série..." autocomplete="off" oninput="filtrarAutocomplete('compras', this.value)" onclick="mostrarAutocomplete('compras')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all">
+                            <div id="dropdown-compras" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
+                        </div>
                         <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Fornecedor</label><input required type="text" id="c_fornecedor" placeholder="Fornecedor" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
                         <div class="lg:col-span-3"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Itens / Materiais</label><input required type="text" id="c_itens" placeholder="Cabos, Disjuntores..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
                         
@@ -865,7 +875,76 @@
         }
 
         // ==========================================
-        // 4. RENDERIZAÇÃO E FORMATAÇÃO (V2.0)
+        // 4. FUNÇÕES ERP REUTILIZÁVEIS (AUTOCOMPLETE)
+        // ==========================================
+        function filtrarPedidos(termo) {
+            const query = termo.toUpperCase();
+            if (!query) return pedidos;
+            return pedidos.filter(p => 
+                (p.serie && p.serie.toUpperCase().includes(query)) || 
+                (p.cliente && p.cliente.toUpperCase().includes(query))
+            );
+        }
+
+        function mostrarAutocomplete(modulo) {
+            const inputId = modulo === 'pagamentos' ? 'pag_serie' : 'c_serie';
+            const termo = document.getElementById(inputId).value;
+            renderizarDropdown(modulo, filtrarPedidos(termo));
+        }
+
+        function filtrarAutocomplete(modulo, termo) {
+            renderizarDropdown(modulo, filtrarPedidos(termo));
+        }
+
+        function renderizarDropdown(modulo, listaFiltrada) {
+            const dropdownId = `dropdown-${modulo}`;
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.innerHTML = '';
+
+            if (listaFiltrada.length === 0) {
+                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-500 text-center font-medium">Nenhum pedido encontrado.</div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            listaFiltrada.forEach(p => {
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs border-b border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors";
+                item.innerHTML = `<span class="font-black text-brand dark:text-blue-400">#${p.serie}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold">${p.cliente}</span>`;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selecionarPedidoERP(modulo, p);
+                };
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.remove('hidden');
+        }
+
+        function selecionarPedidoERP(modulo, pedido) {
+            if (modulo === 'pagamentos') {
+                document.getElementById('pag_serie').value = pedido.serie;
+                document.getElementById('pag_cliente').value = pedido.cliente;
+                document.getElementById('dropdown-pagamentos').classList.add('hidden');
+            } else if (modulo === 'compras') {
+                document.getElementById('c_serie').value = pedido.serie;
+                document.getElementById('dropdown-compras').classList.add('hidden');
+            }
+        }
+
+        function fecharAutocompletesExternos(e) {
+            if (!e.target.closest('#pag_serie') && !e.target.closest('#dropdown-pagamentos')) {
+                const drop = document.getElementById('dropdown-pagamentos');
+                if(drop) drop.classList.add('hidden');
+            }
+            if (!e.target.closest('#c_serie') && !e.target.closest('#dropdown-compras')) {
+                const drop = document.getElementById('dropdown-compras');
+                if(drop) drop.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 5. RENDERIZAÇÃO E FORMATAÇÃO (V2.0)
         // ==========================================
         function formatData(dataISO) {
             if(!dataISO) return '-';
@@ -1104,7 +1183,7 @@
         }
 
         // ==========================================
-        // 5. TOASTS E ALERTAS V2.0
+        // 6. TOASTS E ALERTAS V2.0
         // ==========================================
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -1170,7 +1249,7 @@
         }
 
         // ==========================================
-        // 6. MODAIS
+        // 7. MODAIS
         // ==========================================
         let modalConfirmCallback = null;
         function showModal(title, message, isConfirm, callback = null) {
