@@ -109,8 +109,9 @@
         <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNykiLz48L3N2Zz4=')] opacity-50"></div>
         
         <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl max-w-md w-full p-10 text-center relative z-10 animate-slide-up">
-            <div class="bg-white p-6 rounded-xl shadow-inner inline-block mb-6 w-full max-w-[320px]">
-                <img src="logo.png" alt="Neiva's Logo" class="w-[260px] mx-auto object-contain">
+            <!-- LOGO LOGIN AJUSTADA -->
+            <div class="bg-white p-4 rounded-xl shadow-inner inline-block mb-6 w-full max-w-[200px]">
+                <img src="logo.png" alt="Neiva's Logo" class="w-24 h-16 mx-auto object-contain">
             </div>
             
             <h2 class="text-2xl font-black text-white mb-1 tracking-tight">Dashboard Neiva's</h2>
@@ -150,9 +151,9 @@
 
     <!-- ================= SIDEBAR ================= -->
     <aside id="sidebar" class="w-64 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 z-20 shadow-xl relative hidden md:flex">
-        <!-- Logo Area -->
-        <div class="h-24 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 px-4">
-            <img src="logo.png" alt="Neiva's Logo" class="w-[170px] mx-auto object-contain dark:bg-white dark:p-2 dark:rounded-lg">
+        <!-- LOGO SIDEBAR AJUSTADA -->
+        <div class="h-20 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 px-4">
+            <img src="logo.png" alt="Neiva's Logo" class="w-28 h-12 object-contain dark:bg-white dark:p-1.5 dark:rounded-lg">
         </div>
         
         <!-- Navigation -->
@@ -204,16 +205,17 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
         
         <!-- HEADER MODERNO -->
-        <header class="h-24 glass border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 z-10 sticky top-0 shrink-0">
+        <header class="h-20 glass border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 z-10 sticky top-0 shrink-0">
             
             <div class="flex items-center gap-4 sm:gap-6">
                 <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-500 hover:text-brand focus:outline-none">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
                 
-                <img src="logo.png" alt="Neiva's Logo" class="h-[60px] w-auto object-contain dark:bg-white dark:p-1.5 dark:rounded-lg">
+                <!-- LOGO HEADER AJUSTADA -->
+                <img src="logo.png" alt="Neiva's Logo" class="w-24 h-10 object-contain dark:bg-white dark:p-1 dark:rounded-lg">
                 
-                <div class="hidden sm:block h-10 w-px bg-slate-200 dark:bg-slate-700"></div>
+                <div class="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
                 
                 <!-- Breadcrumb & Title -->
                 <div class="hidden sm:flex flex-col">
@@ -1073,7 +1075,6 @@
         }
 
         function filterGlobal(val) {
-            // Searches the currently active table based on breadcrumb or all tables if on dashboard
             const activeNav = document.querySelector('.nav-btn.text-brand');
             if (activeNav) {
                 if (activeNav.id === 'nav-pedidos') filterTable({value: val}, 'tabelaPedidos');
@@ -1129,12 +1130,10 @@
             container.appendChild(toast);
             lucide.createIcons({ root: toast });
 
-            // Animate In
             setTimeout(() => {
                 toast.classList.remove('translate-x-full', 'opacity-0');
             }, 10);
 
-            // Remove after 3s
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-x-full');
                 setTimeout(() => toast.remove(), 300);
@@ -1152,22 +1151,12 @@
                 if(p.d_entrega < todayStr && p.d_entrega) alertas.push(`Pedido <strong class="text-danger font-mono">#${p.serie}</strong> está atrasado!`);
             });
             alertasGlobais = alertas;
-            const panel = document.getElementById('alertPanel');
-            const controls = document.getElementById('alertControls');
             const badge = document.getElementById('notifBadge');
             
             if (alertasGlobais.length > 0) {
-                panel.classList.remove('hidden');
                 if(badge) badge.classList.remove('hidden');
-                if (alertasGlobais.length > 1) controls.classList.remove('hidden');
-                else controls.classList.add('hidden');
-                alertIndex = 0;
-                renderAlert();
-                resetAlertTimer();
             } else {
-                panel.classList.add('hidden');
                 if(badge) badge.classList.add('hidden');
-                clearInterval(alertTimer);
             }
         }
 
@@ -1179,22 +1168,6 @@
                 showToast("Tudo em dia! Sem alertas.", "success");
             }
         }
-
-        function renderAlert() {
-            if(alertasGlobais.length === 0) return;
-            const contentDiv = document.getElementById('alertContent');
-            const countSpan = document.getElementById('alertCount');
-            contentDiv.style.opacity = '0';
-            setTimeout(() => {
-                contentDiv.innerHTML = `<span>${alertasGlobais[alertIndex]}</span>`;
-                countSpan.innerText = alertasGlobais.length > 1 ? `${alertIndex + 1}/${alertasGlobais.length}` : '1/1';
-                contentDiv.style.opacity = '1';
-            }, 300);
-        }
-
-        function nextAlert() { alertIndex = (alertIndex + 1) % alertasGlobais.length; renderAlert(); resetAlertTimer(); }
-        function prevAlert() { alertIndex = (alertIndex - 1 + alertasGlobais.length) % alertasGlobais.length; renderAlert(); resetAlertTimer(); }
-        function resetAlertTimer() { clearInterval(alertTimer); if (alertasGlobais.length > 1) alertTimer = setInterval(nextAlert, 5000); }
 
         // ==========================================
         // 6. MODAIS
@@ -1216,7 +1189,7 @@
         function limparDados() {
             document.getElementById('authPassword').value = '';
             document.getElementById('authModal').classList.remove('hidden');
-            toggleMenu('relatoriosSubmenu'); // close menu if open
+            toggleMenu('relatoriosSubmenu');
         }
 
         function confirmAuth() {
@@ -1237,7 +1210,6 @@
             });
             if(isHidden) el.classList.remove('hidden', 'flex-col');
             
-            // Submenu specific flex handling
             if(isHidden && id === 'relatoriosSubmenu') el.classList.add('flex-col');
         }
     </script>
