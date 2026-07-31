@@ -109,7 +109,7 @@
         }
 
         @media print {
-            header, form, nav, button, #sidebar, #toast-container, #customModal, #authModal, #loginScreen, .no-print {
+            header, form, nav, button, #sidebar, #toast-container, #customModal, #authModal, #loginScreen, #editModal, .no-print {
                 display: none !important;
             }
             body { background-color: white !important; }
@@ -406,7 +406,7 @@
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[180px]">Obra e Quadro</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[240px]">Cronograma</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[180px]">Status Final</th>
-                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20">Ação</th>
+                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-24">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaPedidos" class="bg-white dark:bg-darkCard divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
@@ -458,7 +458,7 @@
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">Cliente</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data Lembrete</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[150px]">Status</th>
-                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20">Ação</th>
+                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-24">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaPagamentos" class="bg-white dark:bg-darkCard divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
@@ -476,12 +476,12 @@
                             Registro de Compra de Materiais
                         </h2>
                     </div>
-                    <!-- Form Atualizado: Apenas Obra como vínculo principal, eliminando N° de Série -->
+                    <!-- Form Atualizado: Obra Híbrida (Digitação ou Busca) -->
                     <form id="formCompra" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5 items-end w-full" onsubmit="addCompra(event)">
                         
                         <div class="lg:col-span-6 relative w-full">
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Nome da Obra</label>
-                            <input required type="text" id="c_obra" placeholder="Buscar Obra (Autocomplete)..." autocomplete="off" oninput="filtrarAutocomplete('compras', this.value)" onclick="mostrarAutocomplete('compras')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all">
+                            <input required type="text" id="c_obra" placeholder="Digite a obra ou busque na lista..." autocomplete="off" oninput="filtrarAutocomplete('compras', this.value)" onclick="mostrarAutocomplete('compras')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all shadow-sm">
                             <div id="dropdown-compras" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
                         </div>
 
@@ -516,7 +516,7 @@
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data Entrega</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data Faturamento</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[150px]">Status</th>
-                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20">Ação</th>
+                                    <th class="px-4 py-3 text-center text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider w-24">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaCompras" class="bg-white dark:bg-darkCard divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
@@ -534,6 +534,90 @@
             
         </div>
     </main>
+
+    <!-- Modal de Edição Profissional -->
+    <div id="editModal" class="hidden fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in p-4">
+        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl w-full max-w-4xl p-5 sm:p-6 transform transition-all animate-slide-up flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-700 pb-4 shrink-0">
+                <h3 id="editModalTitle" class="text-xl font-black text-brand dark:text-blue-400 flex items-center gap-2">
+                    <i data-lucide="edit" class="w-5 h-5"></i> Editar Registro
+                </h3>
+                <button onclick="fecharModalEdicao()" type="button" class="text-slate-400 hover:text-danger focus:outline-none p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 py-2">
+                <form id="formEditGlobal" onsubmit="salvarEdicaoFirebase(event)">
+                    <input type="hidden" id="edit_modulo">
+                    <input type="hidden" id="edit_idDoc">
+                    
+                    <!-- CONTAINER: PEDIDOS -->
+                    <div id="edit_container_pedidos" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5 w-full">
+                        <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° de Série</label><input required type="text" id="ep_serie" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° da OP</label><input type="text" id="ep_op" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Cliente</label><input required type="text" id="ep_cliente" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-3"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Obra</label><input required type="text" id="ep_obra" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-3"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Quadro</label><input required type="text" id="ep_quadro" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-3"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Proposta</label><input required type="text" id="ep_proposta" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div class="lg:col-span-3"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Status</label>
+                            <select id="ep_status" onchange="toggleMotivoEdit()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all cursor-pointer font-bold">
+                                <option value="Pendente">Pendente</option>
+                                <option value="Entregue">Entregue</option>
+                                <option value="Não Entregue">Não Entregue</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-6 hidden" id="ep_motivo_div"><label class="block text-xs font-bold text-danger mb-1.5 uppercase">Motivo (Não Entregue)</label><textarea id="ep_motivo" class="w-full bg-danger/5 border border-danger/30 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-danger text-slate-800 dark:text-slate-200 h-16 resize-none transition-all"></textarea></div>
+                        
+                        <div class="lg:col-span-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                            <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Data Envio</label><input type="date" id="ep_d_envio" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand transition-all"><label class="flex items-center mt-2.5 text-xs font-medium cursor-pointer text-slate-600 dark:text-slate-300"><input type="checkbox" id="ep_envio_ok" class="mr-2 rounded text-brand w-4 h-4 accent-brand border-slate-300"> Concluído</label></div>
+                            <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Data Elétrico</label><input type="date" id="ep_d_eletrico" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand transition-all"><label class="flex items-center mt-2.5 text-xs font-medium cursor-pointer text-slate-600 dark:text-slate-300"><input type="checkbox" id="ep_eletrico_ok" class="mr-2 rounded text-brand w-4 h-4 accent-brand border-slate-300"> Concluído</label></div>
+                            <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Data Mecânico</label><input type="date" id="ep_d_mecanico" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand transition-all"><label class="flex items-center mt-2.5 text-xs font-medium cursor-pointer text-slate-600 dark:text-slate-300"><input type="checkbox" id="ep_mecanico_ok" class="mr-2 rounded text-brand w-4 h-4 accent-brand border-slate-300"> Concluído</label></div>
+                            <div><label class="block text-xs font-bold text-danger mb-1.5 uppercase">Entrega Limite</label><input type="date" id="ep_d_entrega" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-danger transition-all"></div>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER: PAGAMENTOS -->
+                    <div id="edit_container_pagamentos" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Série</label><input required type="text" id="epa_serie" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Cliente</label><input required type="text" id="epa_cliente" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Data do Lembrete</label><input required type="date" id="epa_data" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Status</label>
+                            <select id="epa_status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all cursor-pointer font-bold">
+                                <option value="Pendente">Pendente</option>
+                                <option value="Pago">Pago</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER: COMPRAS -->
+                    <div id="edit_container_compras" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
+                        <div class="sm:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Nome da Obra</label><input required type="text" id="ec_obra" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Fornecedor</label><input required type="text" id="ec_fornecedor" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Itens / Materiais</label><input required type="text" id="ec_itens" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-danger mb-1.5 uppercase">Data Entrega</label><input required type="date" id="ec_entrega" onchange="calcularDataFaturamentoEdit(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border border-danger/30 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-danger dark:text-white transition-all"></div>
+                        <div><label class="block text-xs font-bold text-alert mb-1.5 uppercase">Data Faturamento</label><input type="date" id="ec_faturamento_calc" class="w-full bg-slate-100 dark:bg-slate-900 border border-alert/30 rounded-lg px-4 py-2.5 text-sm text-slate-500 font-bold cursor-not-allowed" readonly></div>
+                        <div class="sm:col-span-2"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Status</label>
+                            <select id="ec_status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all cursor-pointer font-bold">
+                                <option value="Pendente">Pendente</option>
+                                <option value="Faturado">Faturado</option>
+                                <option value="Entregue">Entregue</option>
+                                <option value="Faturado e Entregue">Faturado e Entregue</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Buttons at the bottom of form -->
+                    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full mt-8 pt-5 border-t border-slate-100 dark:border-slate-700 shrink-0">
+                        <button type="button" onclick="fecharModalEdicao()" class="px-6 py-3.5 sm:py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold rounded-xl transition-colors">Cancelar</button>
+                        <button type="submit" class="px-6 py-3.5 sm:py-2.5 bg-brand hover:bg-brandHover text-white text-sm font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de Limpeza de Dados -->
     <div id="authModal" class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in p-4">
@@ -561,7 +645,7 @@
     </div>
 
     <!-- Modal Padrão / Confirm Exclusão -->
-    <div id="customModal" class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in p-4">
+    <div id="customModal" class="hidden fixed inset-0 z-[500] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in p-4">
         <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all animate-slide-up">
             <h3 id="modalTitle" class="text-xl font-black text-brand dark:text-blue-400 mb-2">Título</h3>
             <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-400 mb-6 whitespace-pre-line font-medium leading-relaxed">Mensagem</p>
@@ -752,7 +836,7 @@
             }
         }
 
-        // Correção Completa do Bug de Menu e Backdrop Mobile
+        // Correção Mobile Sidebar
         function toggleMobileSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
@@ -770,7 +854,6 @@
 
             const isClosed = sidebar.classList.contains('-translate-x-full');
             if (isClosed) {
-                // Abrir o menu e fixar o overlay/rolagem
                 overlay.classList.remove('hidden');
                 setTimeout(() => {
                     sidebar.classList.remove('-translate-x-full');
@@ -779,7 +862,6 @@
                 }, 10);
                 document.body.classList.add('overflow-hidden');
             } else {
-                // Fechar o menu
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.remove('opacity-100');
                 overlay.classList.add('opacity-0');
@@ -811,11 +893,25 @@
         }
 
         function calcularDataFaturamento(entregaStr) {
-            if(!entregaStr) return;
+            if(!entregaStr) {
+                document.getElementById('c_faturamento_calc').value = '';
+                return;
+            }
             const [y, m, d] = entregaStr.split('-');
             const dataObj = new Date(y, m - 1, d);
             dataObj.setDate(dataObj.getDate() - 15);
             document.getElementById('c_faturamento_calc').value = `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}`;
+        }
+        
+        function calcularDataFaturamentoEdit(entregaStr) {
+            if(!entregaStr) {
+                document.getElementById('ec_faturamento_calc').value = '';
+                return;
+            }
+            const [y, m, d] = entregaStr.split('-');
+            const dataObj = new Date(y, m - 1, d);
+            dataObj.setDate(dataObj.getDate() - 15);
+            document.getElementById('ec_faturamento_calc').value = `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}`;
         }
 
         // ==========================================
@@ -868,7 +964,7 @@
             e.preventDefault();
             const novaCompra = {
                 id: Date.now(),
-                obra: document.getElementById('c_obra').value, // Obra registrada diretamente
+                obra: document.getElementById('c_obra').value,
                 fornecedor: document.getElementById('c_fornecedor').value,
                 itens: document.getElementById('c_itens').value,
                 entrega: document.getElementById('c_entrega').value,
@@ -910,6 +1006,135 @@
         }
 
         // ==========================================
+        // EDIÇÃO GLOBAL EM MODAL
+        // ==========================================
+        function abrirModalEdicao(modulo, idDoc) {
+            document.getElementById('edit_modulo').value = modulo;
+            document.getElementById('edit_idDoc').value = idDoc;
+            
+            document.getElementById('edit_container_pedidos').classList.add('hidden');
+            document.getElementById('edit_container_pagamentos').classList.add('hidden');
+            document.getElementById('edit_container_compras').classList.add('hidden');
+            
+            let titulo = '';
+            
+            if (modulo === 'pedidos') {
+                titulo = 'Editar Pedido';
+                document.getElementById('edit_container_pedidos').classList.remove('hidden');
+                const p = pedidos.find(x => x.idDoc === idDoc);
+                if(p) {
+                    document.getElementById('ep_serie').value = p.serie || '';
+                    document.getElementById('ep_op').value = p.op || '';
+                    document.getElementById('ep_cliente').value = p.cliente || '';
+                    document.getElementById('ep_obra').value = p.obra || '';
+                    document.getElementById('ep_quadro').value = p.quadro || '';
+                    document.getElementById('ep_proposta').value = p.proposta || '';
+                    document.getElementById('ep_d_envio').value = p.d_envio || '';
+                    document.getElementById('ep_d_eletrico').value = p.d_eletrico || '';
+                    document.getElementById('ep_d_mecanico').value = p.d_mecanico || '';
+                    document.getElementById('ep_d_entrega').value = p.d_entrega || '';
+                    document.getElementById('ep_status').value = p.status || 'Pendente';
+                    document.getElementById('ep_motivo').value = p.motivo || '';
+                    document.getElementById('ep_envio_ok').checked = p.envio_ok || false;
+                    document.getElementById('ep_eletrico_ok').checked = p.eletrico_ok || false;
+                    document.getElementById('ep_mecanico_ok').checked = p.mecanico_ok || false;
+                    toggleMotivoEdit();
+                }
+            } else if (modulo === 'pagamentos') {
+                titulo = 'Editar Lembrete Financeiro';
+                document.getElementById('edit_container_pagamentos').classList.remove('hidden');
+                const p = pagamentos.find(x => x.idDoc === idDoc);
+                if(p) {
+                    document.getElementById('epa_serie').value = p.serie || '';
+                    document.getElementById('epa_cliente').value = p.cliente || '';
+                    document.getElementById('epa_data').value = p.data || '';
+                    document.getElementById('epa_status').value = p.status || 'Pendente';
+                }
+            } else if (modulo === 'compras') {
+                titulo = 'Editar Compra';
+                document.getElementById('edit_container_compras').classList.remove('hidden');
+                const c = compras.find(x => x.idDoc === idDoc);
+                if(c) {
+                    document.getElementById('ec_obra').value = c.obra || '';
+                    document.getElementById('ec_fornecedor').value = c.fornecedor || '';
+                    document.getElementById('ec_itens').value = c.itens || '';
+                    document.getElementById('ec_entrega').value = c.entrega || '';
+                    document.getElementById('ec_faturamento_calc').value = c.faturamento_calc || '';
+                    document.getElementById('ec_status').value = c.status || 'Pendente';
+                }
+            }
+            
+            document.getElementById('editModalTitle').innerHTML = `<i data-lucide="edit" class="w-5 h-5"></i> ${titulo}`;
+            lucide.createIcons();
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function fecharModalEdicao() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function salvarEdicaoFirebase(e) {
+            e.preventDefault();
+            const modulo = document.getElementById('edit_modulo').value;
+            const idDoc = document.getElementById('edit_idDoc').value;
+            let updateData = {};
+
+            if (modulo === 'pedidos') {
+                updateData = {
+                    serie: document.getElementById('ep_serie').value,
+                    op: document.getElementById('ep_op').value,
+                    cliente: document.getElementById('ep_cliente').value,
+                    obra: document.getElementById('ep_obra').value,
+                    quadro: document.getElementById('ep_quadro').value,
+                    proposta: document.getElementById('ep_proposta').value,
+                    d_envio: document.getElementById('ep_d_envio').value,
+                    d_eletrico: document.getElementById('ep_d_eletrico').value,
+                    d_mecanico: document.getElementById('ep_d_mecanico').value,
+                    d_entrega: document.getElementById('ep_d_entrega').value,
+                    status: document.getElementById('ep_status').value,
+                    motivo: document.getElementById('ep_status').value === 'Não Entregue' ? document.getElementById('ep_motivo').value : '',
+                    envio_ok: document.getElementById('ep_envio_ok').checked,
+                    eletrico_ok: document.getElementById('ep_eletrico_ok').checked,
+                    mecanico_ok: document.getElementById('ep_mecanico_ok').checked
+                };
+            } else if (modulo === 'pagamentos') {
+                updateData = {
+                    serie: document.getElementById('epa_serie').value,
+                    cliente: document.getElementById('epa_cliente').value,
+                    data: document.getElementById('epa_data').value,
+                    status: document.getElementById('epa_status').value
+                };
+            } else if (modulo === 'compras') {
+                updateData = {
+                    obra: document.getElementById('ec_obra').value,
+                    fornecedor: document.getElementById('ec_fornecedor').value,
+                    itens: document.getElementById('ec_itens').value,
+                    entrega: document.getElementById('ec_entrega').value,
+                    faturamento_calc: document.getElementById('ec_faturamento_calc').value,
+                    status: document.getElementById('ec_status').value
+                };
+            }
+
+            db.collection(modulo).doc(idDoc).update(updateData).then(() => {
+                showToast("Registro atualizado com sucesso!", "success");
+                fecharModalEdicao();
+            }).catch(err => {
+                showToast("Erro ao atualizar: " + err.message, "error");
+            });
+        }
+
+        function toggleMotivoEdit() {
+            const st = document.getElementById('ep_status').value;
+            const div = document.getElementById('ep_motivo_div');
+            if(st === 'Não Entregue') {
+                div.classList.remove('hidden');
+            } else {
+                div.classList.add('hidden');
+                document.getElementById('ep_motivo').value = '';
+            }
+        }
+
+        // ==========================================
         // 5. FUNÇÕES ERP REUTILIZÁVEIS (AUTOCOMPLETE)
         // ==========================================
         function filtrarPedidos(termo) {
@@ -938,7 +1163,7 @@
             dropdown.innerHTML = '';
 
             if (listaFiltrada.length === 0) {
-                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-500 text-center font-medium">Nenhum pedido encontrado.</div>`;
+                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-500 text-center font-medium">Nenhum pedido correspondente.<br>Pode digitar livremente!</div>`;
                 dropdown.classList.remove('hidden');
                 return;
             }
@@ -1115,8 +1340,11 @@
                                 <div class="text-sm mb-3 font-bold ${p.status === 'Entregue' ? 'text-success line-through opacity-70' : 'text-slate-800 dark:text-slate-200'} font-mono">${formatDataShort(p.d_entrega)}</div>
                                 ${statusHtml}${motivoHtml}
                             </td>
-                            <td class="px-4 py-4 text-center align-middle">
-                                <button onclick="apagarItem('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-3 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
+                            <td class="px-4 py-4 text-center align-middle whitespace-nowrap">
+                                <button onclick="abrirModalEdicao('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
+                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="apagarItem('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
                                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                                 </button>
                             </td>
@@ -1143,8 +1371,13 @@
                                     <option value="Pago" ${p.status==='Pago'?'selected':''} class="text-slate-800">🟢 Pago</option>
                                 </select>
                             </td>
-                            <td class="px-4 py-4 text-center">
-                                <button onclick="apagarItem('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-3 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                            <td class="px-4 py-4 text-center whitespace-nowrap">
+                                <button onclick="abrirModalEdicao('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
+                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="apagarItem('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -1175,8 +1408,13 @@
                                     <option value="Faturado e Entregue" ${c.status==='Faturado e Entregue'?'selected':''} class="text-slate-800">✅ Faturado e Entregue</option>
                                 </select>
                             </td>
-                            <td class="px-4 py-4 text-center">
-                                <button onclick="apagarItem('compras', '${c.idDoc}')" class="text-slate-300 hover:text-danger p-3 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                            <td class="px-4 py-4 text-center whitespace-nowrap">
+                                <button onclick="abrirModalEdicao('compras', '${c.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
+                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="apagarItem('compras', '${c.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -1411,7 +1649,6 @@
         function limparDados() {
             document.getElementById('authPassword').value = '';
             document.getElementById('authModal').classList.remove('hidden');
-            // Fechar submenu se estiver aberto ao clicar em limpar
             const el = document.getElementById('relatoriosSubmenu');
             if(el && el.classList.contains('max-h-96')) toggleMenu('relatoriosSubmenu');
         }
@@ -1425,7 +1662,6 @@
             }
         }
 
-        // Funcionalidade Suave do Accordion de Exportação Corrigida
         function toggleMenu(id) {
             const el = document.getElementById(id);
             const arrow = document.getElementById('relatoriosArrow');
@@ -1434,12 +1670,10 @@
             const isClosed = el.classList.contains('max-h-0');
             
             if(isClosed) {
-                // Abre de forma suave
                 el.classList.remove('max-h-0', 'opacity-0');
                 el.classList.add('max-h-96', 'opacity-100');
                 if(arrow) arrow.classList.add('rotate-180');
             } else {
-                // Fecha de forma suave
                 el.classList.remove('max-h-96', 'opacity-100');
                 el.classList.add('max-h-0', 'opacity-0');
                 if(arrow) arrow.classList.remove('rotate-180');
