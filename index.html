@@ -164,10 +164,10 @@
     </div>
 
     <!-- ================= SIDEBAR (DESKTOP & MOBILE DRAWER) ================= -->
-    <aside id="sidebar" class="w-64 md:w-64 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-slate-700 flex-col transition-transform duration-300 z-50 shadow-xl fixed md:relative h-full -translate-x-full md:translate-x-0 hidden md:flex">
+    <aside id="sidebar" class="w-64 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-300 z-50 shadow-xl fixed md:relative h-full inset-y-0 left-0 -translate-x-full md:translate-x-0">
         <div class="h-20 flex items-center justify-between md:justify-center border-b border-slate-100 dark:border-slate-800 px-4 shrink-0">
             <img src="logo.png" alt="Neiva's Logo" class="w-28 h-12 object-contain dark:bg-white dark:p-1.5 dark:rounded-lg">
-            <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-500 hover:text-brand focus:outline-none p-2">
+            <button onclick="toggleMobileSidebar(true)" class="md:hidden text-slate-500 hover:text-brand focus:outline-none p-2">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
@@ -194,9 +194,9 @@
             <div class="relative group">
                 <button onclick="toggleMenu('relatoriosSubmenu')" class="w-full flex items-center justify-between px-4 py-3.5 md:py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
                     <div class="flex items-center gap-3"><i data-lucide="bar-chart-2" class="w-5 h-5"></i> Exportar Dados</div>
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <i data-lucide="chevron-down" id="relatoriosArrow" class="w-4 h-4 transition-transform duration-300"></i>
                 </button>
-                <div id="relatoriosSubmenu" class="hidden flex-col ml-4 pl-4 border-l border-slate-200 dark:border-slate-700 mt-1 space-y-1 py-1">
+                <div id="relatoriosSubmenu" class="flex flex-col ml-4 pl-4 border-l border-slate-200 dark:border-slate-700 mt-1 space-y-1 overflow-hidden transition-all duration-300 max-h-0 opacity-0">
                     <p class="text-[10px] uppercase font-bold text-slate-400 mt-2 mb-1 px-3">Excel (Planilha)</p>
                     <a href="#" onclick="exportarExcel('pedidos'); toggleMobileSidebar(true);" class="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-slate-500 hover:text-brand dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Pedidos</a>
                     <a href="#" onclick="exportarExcel('compras'); toggleMobileSidebar(true);" class="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-slate-500 hover:text-brand dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Compras</a>
@@ -219,8 +219,8 @@
         </div>
     </aside>
 
-    <!-- Mobile Overlay -->
-    <div id="mobileOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 z-40 hidden backdrop-blur-sm animate-fade-in transition-opacity"></div>
+    <!-- Mobile Overlay (Fixed Backgound) -->
+    <div id="mobileOverlay" onclick="toggleMobileSidebar(true)" class="fixed inset-0 bg-slate-900/60 z-40 hidden backdrop-blur-sm transition-opacity duration-300 opacity-0"></div>
 
     <!-- ================= MAIN CONTENT ================= -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
@@ -476,19 +476,13 @@
                             Registro de Compra de Materiais
                         </h2>
                     </div>
-                    <!-- Adequado conforme a regra 3: Campo Obra Automático Integrado -->
+                    <!-- Form Atualizado: Apenas Obra como vínculo principal, eliminando N° de Série -->
                     <form id="formCompra" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5 items-end w-full" onsubmit="addCompra(event)">
                         
-                        <div class="lg:col-span-2 relative w-full">
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">N° Série</label>
-                            <input required type="text" id="c_serie" placeholder="Buscar Série..." autocomplete="off" oninput="filtrarAutocomplete('compras', this.value)" onclick="mostrarAutocomplete('compras')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all">
-                            <div id="dropdown-compras" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
-                        </div>
-                        
-                        <!-- Novo Campo Obra (Preenchimento Automático) -->
-                        <div class="lg:col-span-4 w-full">
+                        <div class="lg:col-span-6 relative w-full">
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Nome da Obra</label>
-                            <input required type="text" id="c_obra" placeholder="Preenchimento automático" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 sm:py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                            <input required type="text" id="c_obra" placeholder="Buscar Obra (Autocomplete)..." autocomplete="off" oninput="filtrarAutocomplete('compras', this.value)" onclick="mostrarAutocomplete('compras')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all">
+                            <div id="dropdown-compras" class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
                         </div>
 
                         <div class="lg:col-span-2 w-full"><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase">Fornecedor</label><input required type="text" id="c_fornecedor" placeholder="Fornecedor" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:text-white transition-all"></div>
@@ -516,7 +510,7 @@
                         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 whitespace-nowrap sm:whitespace-normal">
                             <thead class="bg-slate-50 dark:bg-slate-800">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[150px]">Série / Obra</th>
+                                    <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">Nome da Obra</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[150px]">Fornecedor</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">Itens</th>
                                     <th class="px-4 py-3 text-left text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data Entrega</th>
@@ -758,29 +752,38 @@
             }
         }
 
+        // Correção Completa do Bug de Menu e Backdrop Mobile
         function toggleMobileSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
             
             if (forceClose) {
-                sidebar.classList.remove('translate-x-0');
                 sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                document.body.classList.remove('overflow-hidden');
                 setTimeout(() => {
                     overlay.classList.add('hidden');
                 }, 300);
                 return;
             }
 
-            const isHidden = sidebar.classList.contains('-translate-x-full');
-            if (isHidden) {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                // Abrir o menu e fixar o overlay/rolagem
                 overlay.classList.remove('hidden');
                 setTimeout(() => {
                     sidebar.classList.remove('-translate-x-full');
-                    sidebar.classList.add('translate-x-0');
+                    overlay.classList.remove('opacity-0');
+                    overlay.classList.add('opacity-100');
                 }, 10);
+                document.body.classList.add('overflow-hidden');
             } else {
-                sidebar.classList.remove('translate-x-0');
+                // Fechar o menu
                 sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                document.body.classList.remove('overflow-hidden');
                 setTimeout(() => {
                     overlay.classList.add('hidden');
                 }, 300);
@@ -865,8 +868,7 @@
             e.preventDefault();
             const novaCompra = {
                 id: Date.now(),
-                serie: document.getElementById('c_serie').value,
-                obra: document.getElementById('c_obra').value, // Inclusão do campo Obra
+                obra: document.getElementById('c_obra').value, // Obra registrada diretamente
                 fornecedor: document.getElementById('c_fornecedor').value,
                 itens: document.getElementById('c_itens').value,
                 entrega: document.getElementById('c_entrega').value,
@@ -915,12 +917,13 @@
             if (!query) return pedidos;
             return pedidos.filter(p => 
                 (p.serie && p.serie.toUpperCase().includes(query)) || 
-                (p.cliente && p.cliente.toUpperCase().includes(query))
+                (p.cliente && p.cliente.toUpperCase().includes(query)) ||
+                (p.obra && p.obra.toUpperCase().includes(query))
             );
         }
 
         function mostrarAutocomplete(modulo) {
-            const inputId = modulo === 'pagamentos' ? 'pag_serie' : 'c_serie';
+            const inputId = modulo === 'pagamentos' ? 'pag_serie' : 'c_obra';
             const termo = document.getElementById(inputId).value;
             renderizarDropdown(modulo, filtrarPedidos(termo));
         }
@@ -943,7 +946,13 @@
             listaFiltrada.forEach(p => {
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs border-b border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors";
-                item.innerHTML = `<span class="font-black text-brand dark:text-blue-400">#${p.serie}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[150px]">${p.cliente}</span>`;
+                
+                if (modulo === 'compras') {
+                    item.innerHTML = `<span class="font-black text-brand dark:text-blue-400 truncate max-w-[150px]">${p.obra || '-'}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold text-[10px] uppercase">Ref: #${p.serie}</span>`;
+                } else {
+                    item.innerHTML = `<span class="font-black text-brand dark:text-blue-400">#${p.serie}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[150px]">${p.cliente}</span>`;
+                }
+                
                 item.onclick = (e) => {
                     e.stopPropagation();
                     selecionarPedidoERP(modulo, p);
@@ -960,8 +969,7 @@
                 document.getElementById('pag_cliente').value = pedido.cliente;
                 document.getElementById('dropdown-pagamentos').classList.add('hidden');
             } else if (modulo === 'compras') {
-                document.getElementById('c_serie').value = pedido.serie;
-                document.getElementById('c_obra').value = pedido.obra || '-'; // Autocomplete para o Módulo Compras
+                document.getElementById('c_obra').value = pedido.obra || '-'; 
                 document.getElementById('dropdown-compras').classList.add('hidden');
             }
         }
@@ -971,7 +979,7 @@
                 const drop = document.getElementById('dropdown-pagamentos');
                 if(drop) drop.classList.add('hidden');
             }
-            if (!e.target.closest('#c_serie') && !e.target.closest('#dropdown-compras')) {
+            if (!e.target.closest('#c_obra') && !e.target.closest('#dropdown-compras')) {
                 const drop = document.getElementById('dropdown-compras');
                 if(drop) drop.classList.add('hidden');
             }
@@ -983,7 +991,7 @@
         function formatData(dataISO) {
             if(!dataISO) return '-';
             const [y, m, d] = dataISO.split('-');
-            return `${d}/${m}/${y}`; // Atualizado para mostrar ano completo
+            return `${d}/${m}/${y}`; 
         }
         
         function formatDataShort(dataISO) {
@@ -1153,8 +1161,7 @@
                     tCompras.innerHTML += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-b border-slate-100 dark:border-slate-800">
                             <td class="px-4 py-4">
-                                <div class="font-black text-brand dark:text-blue-400">#${c.serie}</div>
-                                <div class="text-[10px] uppercase font-bold text-slate-400 mt-1 whitespace-normal">OBRA: <span class="text-slate-600 dark:text-slate-300">${c.obra || '-'}</span></div>
+                                <div class="font-black text-brand dark:text-blue-400 whitespace-normal uppercase">${c.obra || '-'}</div>
                             </td>
                             <td class="px-4 py-4 font-bold text-slate-800 dark:text-slate-200 whitespace-normal"><i data-lucide="truck" class="w-4 h-4 inline mr-1 text-slate-400"></i>${c.fornecedor}</td>
                             <td class="px-4 py-4 text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-normal"><i data-lucide="package" class="w-4 h-4 inline mr-1 text-slate-400"></i>${c.itens || '-'}</td>
@@ -1242,7 +1249,6 @@
                     };
                 } else {
                     return {
-                        "Série": row.serie,
                         "Obra": row.obra || '-',
                         "Fornecedor": row.fornecedor,
                         "Itens / Materiais": row.itens,
@@ -1257,7 +1263,6 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, `Relatório de ${tipo === 'pedidos' ? 'Pedidos' : 'Compras'}`);
 
-            // Estilização Básica (Tamanhos de Coluna)
             const colWidths = Object.keys(exportData[0]).map(key => ({ wch: Math.max(key.length + 5, 18) }));
             worksheet['!cols'] = colWidths;
 
@@ -1268,7 +1273,7 @@
 
         function exportarPDF(tipo) {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape'); // Formato Paisagem para melhor leitura de tabelas
+            const doc = new jsPDF('landscape'); 
             const arrayDados = tipo === 'pedidos' ? pedidos : compras;
 
             if(arrayDados.length === 0) { 
@@ -1279,25 +1284,23 @@
             const username = localStorage.getItem('neivas_logado') || 'Usuário Desconhecido';
             const dataAtual = new Date().toLocaleString('pt-BR');
 
-            // Cabeçalho PDF
             doc.setFontSize(18);
-            doc.setTextColor(22, 59, 140); // Cor Brand (#163B8C)
+            doc.setTextColor(22, 59, 140); 
             doc.text(`Relatório de ${tipo === 'pedidos' ? 'Pedidos' : 'Compras'} - Neiva's`, 14, 20);
 
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
             doc.text(`Documento gerado por: ${username} | Em: ${dataAtual}`, 14, 28);
 
-            // Tabela PDF
             const columns = tipo === 'pedidos' 
                 ? ["Série", "OP", "Cliente", "Obra", "Quadro", "Proposta", "Status"] 
-                : ["Série", "Obra", "Fornecedor", "Itens", "Data Entrega", "Faturamento", "Status"];
+                : ["Obra", "Fornecedor", "Itens", "Data Entrega", "Faturamento", "Status"];
 
             const rows = arrayDados.map(row => {
                 if(tipo === 'pedidos') {
                     return [row.serie, row.op || '-', row.cliente, row.obra, row.quadro, row.proposta, row.status];
                 } else {
-                    return [row.serie, row.obra || '-', row.fornecedor, row.itens || '-', formatData(row.entrega), formatData(row.faturamento_calc), row.status];
+                    return [row.obra || '-', row.fornecedor, row.itens || '-', formatData(row.entrega), formatData(row.faturamento_calc), row.status];
                 }
             });
 
@@ -1311,7 +1314,6 @@
                 alternateRowStyles: { fillColor: [244, 247, 251] },
                 margin: { top: 35 },
                 didDrawPage: function (data) {
-                    // Rodapé (Paginação)
                     let str = 'Página ' + doc.internal.getNumberOfPages();
                     doc.setFontSize(8);
                     let pageSize = doc.internal.pageSize;
@@ -1409,7 +1411,9 @@
         function limparDados() {
             document.getElementById('authPassword').value = '';
             document.getElementById('authModal').classList.remove('hidden');
-            toggleMenu('relatoriosSubmenu');
+            // Fechar submenu se estiver aberto ao clicar em limpar
+            const el = document.getElementById('relatoriosSubmenu');
+            if(el && el.classList.contains('max-h-96')) toggleMenu('relatoriosSubmenu');
         }
 
         function confirmAuth() {
@@ -1421,16 +1425,25 @@
             }
         }
 
+        // Funcionalidade Suave do Accordion de Exportação Corrigida
         function toggleMenu(id) {
             const el = document.getElementById(id);
+            const arrow = document.getElementById('relatoriosArrow');
             if(!el) return;
-            const isHidden = el.classList.contains('hidden');
-            document.querySelectorAll('[id$="Menu"], [id$="Submenu"]').forEach(m => {
-                if(m.id !== id) m.classList.add('hidden');
-            });
-            if(isHidden) el.classList.remove('hidden', 'flex-col');
             
-            if(isHidden && id === 'relatoriosSubmenu') el.classList.add('flex-col');
+            const isClosed = el.classList.contains('max-h-0');
+            
+            if(isClosed) {
+                // Abre de forma suave
+                el.classList.remove('max-h-0', 'opacity-0');
+                el.classList.add('max-h-96', 'opacity-100');
+                if(arrow) arrow.classList.add('rotate-180');
+            } else {
+                // Fecha de forma suave
+                el.classList.remove('max-h-96', 'opacity-100');
+                el.classList.add('max-h-0', 'opacity-0');
+                if(arrow) arrow.classList.remove('rotate-180');
+            }
         }
     </script>
 </body>
