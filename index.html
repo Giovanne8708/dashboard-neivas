@@ -81,6 +81,9 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
         
+        /* Ocultar barra horizontal na Central de Notificações */
+        .hide-scroll-x::-webkit-scrollbar:horizontal { display: none; }
+        
         /* Glassmorphism effects */
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -257,7 +260,7 @@
                 <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
 
                 <div class="flex items-center gap-1 sm:gap-3">
-                    <!-- BOTÃO DO SINO ATUALIZADO PARA CENTRAL DE NOTIFICAÇÕES -->
+                    <!-- BOTÃO DO SINO -->
                     <button onclick="checkNotificationsManually()" class="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Notificações">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                         <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-danger text-white text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 border-white dark:border-darkCard shadow-sm transition-all transform scale-100 min-w-[20px] text-center">0</span>
@@ -652,31 +655,40 @@
         </div>
     </div>
 
-    <!-- ================= CENTRAL DE NOTIFICAÇÕES (UI) ================= -->
-    <div id="notifCenterOverlay" onclick="toggleNotificationCenter()" class="hidden fixed inset-0 bg-slate-900/60 z-[550] backdrop-blur-sm transition-opacity opacity-0"></div>
+    <!-- ================= CENTRAL DE NOTIFICAÇÕES PREMIUM ================= -->
+    <div id="notifCenterOverlay" onclick="toggleNotificationCenter(true)" class="hidden fixed inset-0 z-[550] opacity-0 transition-opacity duration-200 bg-slate-900/40 backdrop-blur-[2px]"></div>
 
-    <div id="notifCenterPanel" class="hidden fixed top-0 right-0 bottom-0 w-full sm:w-[420px] bg-white dark:bg-darkCard sm:top-20 sm:bottom-auto sm:right-6 sm:max-h-[calc(100vh-100px)] sm:rounded-2xl shadow-2xl sm:border border-slate-200 dark:border-slate-700 z-[600] flex flex-col transition-transform transform translate-x-full sm:translate-x-0 sm:opacity-0 sm:scale-95 duration-300">
-        <!-- Header -->
-        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-800/50 sm:rounded-t-2xl">
-            <h3 class="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="bell-ring" class="w-5 h-5 text-brand"></i> Notificações
-            </h3>
+    <!-- Container Painel -->
+    <div id="notifCenterPanel" class="hidden fixed left-[10px] right-[10px] sm:left-auto sm:right-6 top-20 w-[calc(100vw-20px)] sm:w-[420px] max-h-[80vh] sm:max-h-[620px] bg-white/95 dark:bg-darkCard/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5),0_8px_24px_rgba(0,0,0,0.4)] z-[600] flex flex-col transition-all duration-200 origin-top sm:origin-top-right transform scale-95 opacity-0 -translate-y-2 overflow-hidden">
+        
+        <!-- Premium Header -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/60 flex items-start justify-between shrink-0 bg-white dark:bg-darkCard">
             <div class="flex items-center gap-3">
-                <button onclick="marcarTodasComoLidas()" class="text-xs font-bold text-brand hover:text-brandHover dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Marcar todas</button>
-                <button onclick="toggleNotificationCenter()" class="sm:hidden p-1.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="w-10 h-10 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-blue-400 shrink-0">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white leading-tight flex items-center gap-2">
+                        Notificações <span id="headerUnreadCount" class="hidden text-[10px] font-bold bg-brand dark:bg-blue-500 text-white px-1.5 py-0.5 rounded-full shadow-sm">0 novas</span>
+                    </h3>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Central de alertas corporativos</p>
+                </div>
             </div>
+            <button onclick="marcarTodasComoLidas()" class="text-[11px] font-bold text-slate-500 hover:text-brand dark:hover:text-blue-400 transition-colors flex items-center gap-1 mt-1 shrink-0 px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md">
+                Marcar lidas <i data-lucide="check" class="w-3 h-3"></i>
+            </button>
         </div>
 
-        <!-- Filters -->
-        <div class="flex px-4 py-3 gap-2 overflow-x-auto custom-scrollbar border-b border-slate-100 dark:border-slate-800 shrink-0">
-            <button onclick="setNotifFilter('todas')" id="nFilter-todas" class="nfilter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-white dark:bg-white dark:text-slate-900 whitespace-nowrap transition-colors">Todas (0)</button>
-            <button onclick="setNotifFilter('urgente')" id="nFilter-urgente" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🔴 Urgentes (0)</button>
-            <button onclick="setNotifFilter('hoje')" id="nFilter-hoje" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🟠 Hoje (0)</button>
-            <button onclick="setNotifFilter('amanha')" id="nFilter-amanha" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🟡 Amanhã (0)</button>
+        <!-- Premium Compact Filters -->
+        <div class="flex px-5 pt-3 gap-5 overflow-x-auto hide-scroll-x border-b border-slate-100 dark:border-slate-800/60 shrink-0 bg-slate-50/30 dark:bg-slate-900/20">
+            <button onclick="setNotifFilter('todas')" id="nFilter-todas" class="nfilter-btn active-filter relative text-[11px] font-bold text-brand dark:text-blue-400 pb-2.5 border-b-2 border-brand dark:border-blue-400 transition-all whitespace-nowrap">Todos (0)</button>
+            <button onclick="setNotifFilter('urgente')" id="nFilter-urgente" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Urgentes (0)</button>
+            <button onclick="setNotifFilter('hoje')" id="nFilter-hoje" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Hoje (0)</button>
+            <button onclick="setNotifFilter('amanha')" id="nFilter-amanha" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Amanhã (0)</button>
         </div>
 
-        <!-- List Content -->
-        <div id="notifList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 bg-slate-50/50 dark:bg-darkBg/50 sm:rounded-b-2xl">
+        <!-- List Content Area (Scrollable Only Here) -->
+        <div id="notifList" class="flex-1 overflow-y-auto hide-scroll-x p-3 sm:p-4 space-y-2.5 bg-slate-50/40 dark:bg-darkBg/40 relative">
             <!-- Notifications Injected via JS -->
         </div>
     </div>
@@ -686,7 +698,6 @@
 
     <!-- ================= JAVASCRIPT ================= -->
     <script>
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBd7z1IXeKOb1nbSsPblSagsFDO_PxbGbU",
             authDomain: "dashboard-neivas.firebaseapp.com",
@@ -697,7 +708,6 @@
             measurementId: "G-52R27XFXMR"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -708,7 +718,7 @@
         }, true);
 
         // ==========================================
-        // 1. DADOS DE LOGIN E SISTEMA GERAL
+        // 1. DADOS GLOBAIS E HELPERS
         // ==========================================
         const usuariosCadastrados = [
             { email: 'juliana.samara@neivas.com', senha: '1206' },
@@ -719,7 +729,6 @@
         let pagamentos = [];
         let compras = [];
         
-        // FUNÇÕES GLOBAIS DE DATA LOCAL (Substitui new Date().toISOString() para evitar Timezone issue)
         function getLocalDateString(offsetDays = 0) {
             const d = new Date();
             d.setDate(d.getDate() + offsetDays);
@@ -763,50 +772,39 @@
             iniciarSincronizacaoNuvem();
         });
 
-        // ==========================================
-        // 2. SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE)
-        // ==========================================
         function iniciarSincronizacaoNuvem() {
             db.collection('pedidos').onSnapshot((snapshot) => {
                 pedidos = [];
-                snapshot.forEach((doc) => {
-                    pedidos.push({ idDoc: doc.id, ...doc.data() });
-                });
+                snapshot.forEach((doc) => { pedidos.push({ idDoc: doc.id, ...doc.data() }); });
                 renderAll();
             });
 
             db.collection('pagamentos').onSnapshot((snapshot) => {
                 pagamentos = [];
-                snapshot.forEach((doc) => {
-                    pagamentos.push({ idDoc: doc.id, ...doc.data() });
-                });
+                snapshot.forEach((doc) => { pagamentos.push({ idDoc: doc.id, ...doc.data() }); });
                 renderAll();
             });
 
             db.collection('compras').onSnapshot((snapshot) => {
                 compras = [];
-                snapshot.forEach((doc) => {
-                    compras.push({ idDoc: doc.id, ...doc.data() });
-                });
+                snapshot.forEach((doc) => { compras.push({ idDoc: doc.id, ...doc.data() }); });
                 renderAll();
             });
         }
 
         // ==========================================
-        // 3. FUNÇÕES DE LOGIN & UI EXTRAS
+        // UI & AUTH
         // ==========================================
         function fazerLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const senha = document.getElementById('loginSenha').value;
-            
             const usuarioValido = usuariosCadastrados.find(user => user.email === email && user.senha === senha);
 
             if (usuarioValido) {
                 localStorage.setItem('neivas_logado', email);
                 document.getElementById('userEmailDisplayHeader').innerText = email;
-                const initial = email.substring(0, 2).toUpperCase();
-                document.querySelector('.bg-gradient-to-tr').innerText = initial;
+                document.querySelector('.bg-gradient-to-tr').innerText = email.substring(0, 2).toUpperCase();
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('loginErro').classList.add('hidden');
                 showToast("Login realizado com sucesso!", "success");
@@ -825,34 +823,21 @@
         function togglePasswordVisibility() {
             const input = document.getElementById('loginSenha');
             const icon = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
+            if (input.type === 'password') { input.type = 'text'; icon.setAttribute('data-lucide', 'eye-off'); } 
+            else { input.type = 'password'; icon.setAttribute('data-lucide', 'eye'); }
             lucide.createIcons();
         }
 
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
-            if (document.documentElement.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             updateThemeIcon();
         }
 
         function updateThemeIcon() {
             const icon = document.getElementById('themeIcon');
             if(icon) {
-                if(document.documentElement.classList.contains('dark')) {
-                    icon.setAttribute('data-lucide', 'sun');
-                } else {
-                    icon.setAttribute('data-lucide', 'moon');
-                }
+                icon.setAttribute('data-lucide', document.documentElement.classList.contains('dark') ? 'sun' : 'moon');
                 lucide.createIcons();
             }
         }
@@ -861,7 +846,6 @@
             const now = new Date();
             const clockEl = document.getElementById('headerClock');
             const greetEl = document.getElementById('headerGreeting');
-            
             if(clockEl) clockEl.innerText = now.toLocaleTimeString('pt-BR');
             if(greetEl) {
                 const hour = now.getHours();
@@ -874,29 +858,23 @@
         function toggleMobileSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
-            
             if (forceClose) {
                 sidebar.classList.add('-translate-x-full');
-                overlay.classList.remove('opacity-100');
-                overlay.classList.add('opacity-0');
+                overlay.classList.remove('opacity-100'); overlay.classList.add('opacity-0');
                 document.body.classList.remove('overflow-hidden');
                 setTimeout(() => { overlay.classList.add('hidden'); }, 300);
                 return;
             }
-
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) {
+            if (sidebar.classList.contains('-translate-x-full')) {
                 overlay.classList.remove('hidden');
                 setTimeout(() => {
                     sidebar.classList.remove('-translate-x-full');
-                    overlay.classList.remove('opacity-0');
-                    overlay.classList.add('opacity-100');
+                    overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100');
                 }, 10);
                 document.body.classList.add('overflow-hidden');
             } else {
                 sidebar.classList.add('-translate-x-full');
-                overlay.classList.remove('opacity-100');
-                overlay.classList.add('opacity-0');
+                overlay.classList.remove('opacity-100'); overlay.classList.add('opacity-0');
                 document.body.classList.remove('overflow-hidden');
                 setTimeout(() => { overlay.classList.add('hidden'); }, 300);
             }
@@ -910,330 +888,212 @@
                 el.classList.remove('bg-blue-50', 'dark:bg-brand/20', 'text-brand', 'dark:text-blue-400');
                 el.classList.add('text-slate-600', 'dark:text-slate-400');
             });
-            
             const activeNav = document.getElementById(`nav-${tabId}`);
             if(activeNav) {
                 activeNav.classList.remove('text-slate-600', 'dark:text-slate-400');
                 activeNav.classList.add('bg-blue-50', 'dark:bg-brand/20', 'text-brand', 'dark:text-blue-400');
             }
-            
             document.getElementById('breadcrumbAtual').innerText = breadcrumbNames[tabId] || 'Dashboard';
             toggleMobileSidebar(true);
             document.getElementById('mainScroll').scrollTo(0,0);
         }
 
         function calcularDataFaturamento(entregaStr) {
-            if(!entregaStr) {
-                document.getElementById('c_faturamento_calc').value = '';
-                return;
-            }
+            if(!entregaStr) { document.getElementById('c_faturamento_calc').value = ''; return; }
             const [y, m, d] = entregaStr.split('-');
-            const dataObj = new Date(y, m - 1, d);
-            dataObj.setDate(dataObj.getDate() - 15);
+            const dataObj = new Date(y, m - 1, d); dataObj.setDate(dataObj.getDate() - 15);
             document.getElementById('c_faturamento_calc').value = `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}`;
         }
         
         function calcularDataFaturamentoEdit(entregaStr) {
-            if(!entregaStr) {
-                document.getElementById('ec_faturamento_calc').value = '';
-                return;
-            }
+            if(!entregaStr) { document.getElementById('ec_faturamento_calc').value = ''; return; }
             const [y, m, d] = entregaStr.split('-');
-            const dataObj = new Date(y, m - 1, d);
-            dataObj.setDate(dataObj.getDate() - 15);
+            const dataObj = new Date(y, m - 1, d); dataObj.setDate(dataObj.getDate() - 15);
             document.getElementById('ec_faturamento_calc').value = `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}`;
         }
 
         // ==========================================
-        // 4. OPERAÇÕES DE GRAVAÇÃO NO FIREBASE
+        // GRAVAÇÕES NO FIREBASE
         // ==========================================
         function addPedido(e) {
             e.preventDefault();
             const novoPedido = {
-                id: Date.now(),
-                serie: document.getElementById('p_serie').value,
-                op: document.getElementById('p_op').value,
-                cliente: document.getElementById('p_cliente').value,
-                obra: document.getElementById('p_obra').value,
-                quadro: document.getElementById('p_quadro').value,
-                proposta: document.getElementById('p_proposta').value,
-                d_envio: document.getElementById('p_d_envio').value,
-                d_eletrico: document.getElementById('p_d_eletrico').value,
-                d_mecanico: document.getElementById('p_d_mecanico').value,
-                d_entrega: document.getElementById('p_d_entrega').value,
-                envio_ok: false,
-                eletrico_ok: false,
-                mecanico_ok: false,
-                status: 'Pendente',
-                motivo: ''
+                id: Date.now(), serie: document.getElementById('p_serie').value, op: document.getElementById('p_op').value,
+                cliente: document.getElementById('p_cliente').value, obra: document.getElementById('p_obra').value,
+                quadro: document.getElementById('p_quadro').value, proposta: document.getElementById('p_proposta').value,
+                d_envio: document.getElementById('p_d_envio').value, d_eletrico: document.getElementById('p_d_eletrico').value,
+                d_mecanico: document.getElementById('p_d_mecanico').value, d_entrega: document.getElementById('p_d_entrega').value,
+                envio_ok: false, eletrico_ok: false, mecanico_ok: false, status: 'Pendente', motivo: ''
             };
             db.collection('pedidos').add(novoPedido).then(() => {
-                document.getElementById('formPedido').reset();
-                showToast("Pedido salvo na nuvem com sucesso!", "success");
-            }).catch(err => showToast("Erro ao salvar pedido: " + err.message, "error"));
+                document.getElementById('formPedido').reset(); showToast("Pedido salvo na nuvem com sucesso!", "success");
+            }).catch(err => showToast("Erro: " + err.message, "error"));
         }
 
         function addPagamento(e) {
             e.preventDefault();
             const novoPagamento = {
-                id: Date.now(),
-                serie: document.getElementById('pag_serie').value,
-                cliente: document.getElementById('pag_cliente').value,
-                data: document.getElementById('pag_data').value,
-                status: 'Pendente'
+                id: Date.now(), serie: document.getElementById('pag_serie').value,
+                cliente: document.getElementById('pag_cliente').value, data: document.getElementById('pag_data').value, status: 'Pendente'
             };
             db.collection('pagamentos').add(novoPagamento).then(() => {
-                document.getElementById('formPagamento').reset();
-                showToast("Lembrete financeiro salvo na nuvem!", "success");
+                document.getElementById('formPagamento').reset(); showToast("Lembrete salvo na nuvem!", "success");
             }).catch(err => showToast("Erro: " + err.message, "error"));
         }
 
         function addCompra(e) {
             e.preventDefault();
             const novaCompra = {
-                id: Date.now(),
-                obra: document.getElementById('c_obra').value,
-                fornecedor: document.getElementById('c_fornecedor').value,
-                itens: document.getElementById('c_itens').value,
-                entrega: document.getElementById('c_entrega').value,
-                faturamento_calc: document.getElementById('c_faturamento_calc').value,
-                status: 'Pendente'
+                id: Date.now(), obra: document.getElementById('c_obra').value, fornecedor: document.getElementById('c_fornecedor').value,
+                itens: document.getElementById('c_itens').value, entrega: document.getElementById('c_entrega').value,
+                faturamento_calc: document.getElementById('c_faturamento_calc').value, status: 'Pendente'
             };
             db.collection('compras').add(novaCompra).then(() => {
-                document.getElementById('formCompra').reset();
-                showToast("Compra salva na nuvem com sucesso!", "success");
+                document.getElementById('formCompra').reset(); showToast("Compra salva na nuvem com sucesso!", "success");
             }).catch(err => showToast("Erro: " + err.message, "error"));
         }
 
         function updateStatusPedido(idDoc, val) {
-            const p = pedidos.find(item => item.idDoc === idDoc);
             let updateData = { status: val };
             if(val !== 'Não Entregue') updateData.motivo = '';
             db.collection('pedidos').doc(idDoc).update(updateData);
         }
-
         function updateMotivoPedido(idDoc, val) { db.collection('pedidos').doc(idDoc).update({ motivo: val }); }
         function toggleEtapa(idDoc, campo, isChecked) { db.collection('pedidos').doc(idDoc).update({ [campo]: isChecked }); }
         function updateStatusGeral(colecao, idDoc, val) { db.collection(colecao).doc(idDoc).update({ status: val }); }
 
         function apagarItem(colecao, idDoc) {
             showModal('Confirmar Exclusão', 'Tem certeza que deseja apagar este registro da nuvem?', true, () => {
-                db.collection(colecao).doc(idDoc).delete().then(() => {
-                    showToast("Registro apagado com sucesso!", "success");
-                });
+                db.collection(colecao).doc(idDoc).delete().then(() => showToast("Registro apagado com sucesso!", "success"));
             });
         }
 
         // ==========================================
-        // EDIÇÃO GLOBAL EM MODAL
+        // EDIÇÃO MODAL
         // ==========================================
         function abrirModalEdicao(modulo, idDoc) {
-            document.getElementById('edit_modulo').value = modulo;
-            document.getElementById('edit_idDoc').value = idDoc;
-            
+            document.getElementById('edit_modulo').value = modulo; document.getElementById('edit_idDoc').value = idDoc;
             document.getElementById('edit_container_pedidos').classList.add('hidden');
             document.getElementById('edit_container_pagamentos').classList.add('hidden');
             document.getElementById('edit_container_compras').classList.add('hidden');
             
             let titulo = '';
-            
             if (modulo === 'pedidos') {
-                titulo = 'Editar Pedido';
-                document.getElementById('edit_container_pedidos').classList.remove('hidden');
+                titulo = 'Editar Pedido'; document.getElementById('edit_container_pedidos').classList.remove('hidden');
                 const p = pedidos.find(x => x.idDoc === idDoc);
                 if(p) {
-                    document.getElementById('ep_serie').value = p.serie || '';
-                    document.getElementById('ep_op').value = p.op || '';
-                    document.getElementById('ep_cliente').value = p.cliente || '';
-                    document.getElementById('ep_obra').value = p.obra || '';
-                    document.getElementById('ep_quadro').value = p.quadro || '';
-                    document.getElementById('ep_proposta').value = p.proposta || '';
-                    document.getElementById('ep_d_envio').value = p.d_envio || '';
-                    document.getElementById('ep_d_eletrico').value = p.d_eletrico || '';
-                    document.getElementById('ep_d_mecanico').value = p.d_mecanico || '';
-                    document.getElementById('ep_d_entrega').value = p.d_entrega || '';
-                    document.getElementById('ep_status').value = p.status || 'Pendente';
-                    document.getElementById('ep_motivo').value = p.motivo || '';
-                    document.getElementById('ep_envio_ok').checked = p.envio_ok || false;
-                    document.getElementById('ep_eletrico_ok').checked = p.eletrico_ok || false;
-                    document.getElementById('ep_mecanico_ok').checked = p.mecanico_ok || false;
-                    toggleMotivoEdit();
+                    document.getElementById('ep_serie').value = p.serie || ''; document.getElementById('ep_op').value = p.op || '';
+                    document.getElementById('ep_cliente').value = p.cliente || ''; document.getElementById('ep_obra').value = p.obra || '';
+                    document.getElementById('ep_quadro').value = p.quadro || ''; document.getElementById('ep_proposta').value = p.proposta || '';
+                    document.getElementById('ep_d_envio').value = p.d_envio || ''; document.getElementById('ep_d_eletrico').value = p.d_eletrico || '';
+                    document.getElementById('ep_d_mecanico').value = p.d_mecanico || ''; document.getElementById('ep_d_entrega').value = p.d_entrega || '';
+                    document.getElementById('ep_status').value = p.status || 'Pendente'; document.getElementById('ep_motivo').value = p.motivo || '';
+                    document.getElementById('ep_envio_ok').checked = p.envio_ok || false; document.getElementById('ep_eletrico_ok').checked = p.eletrico_ok || false;
+                    document.getElementById('ep_mecanico_ok').checked = p.mecanico_ok || false; toggleMotivoEdit();
                 }
             } else if (modulo === 'pagamentos') {
-                titulo = 'Editar Lembrete Financeiro';
-                document.getElementById('edit_container_pagamentos').classList.remove('hidden');
+                titulo = 'Editar Lembrete Financeiro'; document.getElementById('edit_container_pagamentos').classList.remove('hidden');
                 const p = pagamentos.find(x => x.idDoc === idDoc);
                 if(p) {
-                    document.getElementById('epa_serie').value = p.serie || '';
-                    document.getElementById('epa_cliente').value = p.cliente || '';
-                    document.getElementById('epa_data').value = p.data || '';
-                    document.getElementById('epa_status').value = p.status || 'Pendente';
+                    document.getElementById('epa_serie').value = p.serie || ''; document.getElementById('epa_cliente').value = p.cliente || '';
+                    document.getElementById('epa_data').value = p.data || ''; document.getElementById('epa_status').value = p.status || 'Pendente';
                 }
             } else if (modulo === 'compras') {
-                titulo = 'Editar Compra';
-                document.getElementById('edit_container_compras').classList.remove('hidden');
+                titulo = 'Editar Compra'; document.getElementById('edit_container_compras').classList.remove('hidden');
                 const c = compras.find(x => x.idDoc === idDoc);
                 if(c) {
-                    document.getElementById('ec_obra').value = c.obra || '';
-                    document.getElementById('ec_fornecedor').value = c.fornecedor || '';
-                    document.getElementById('ec_itens').value = c.itens || '';
-                    document.getElementById('ec_entrega').value = c.entrega || '';
-                    document.getElementById('ec_faturamento_calc').value = c.faturamento_calc || '';
-                    document.getElementById('ec_status').value = c.status || 'Pendente';
+                    document.getElementById('ec_obra').value = c.obra || ''; document.getElementById('ec_fornecedor').value = c.fornecedor || '';
+                    document.getElementById('ec_itens').value = c.itens || ''; document.getElementById('ec_entrega').value = c.entrega || '';
+                    document.getElementById('ec_faturamento_calc').value = c.faturamento_calc || ''; document.getElementById('ec_status').value = c.status || 'Pendente';
                 }
             }
-            
             document.getElementById('editModalTitle').innerHTML = `<i data-lucide="edit" class="w-5 h-5"></i> ${titulo}`;
-            lucide.createIcons();
-            document.getElementById('editModal').classList.remove('hidden');
+            lucide.createIcons(); document.getElementById('editModal').classList.remove('hidden');
         }
 
         function fecharModalEdicao() { document.getElementById('editModal').classList.add('hidden'); }
 
         function salvarEdicaoFirebase(e) {
             e.preventDefault();
-            const modulo = document.getElementById('edit_modulo').value;
-            const idDoc = document.getElementById('edit_idDoc').value;
+            const modulo = document.getElementById('edit_modulo').value; const idDoc = document.getElementById('edit_idDoc').value;
             let updateData = {};
-
             if (modulo === 'pedidos') {
                 updateData = {
-                    serie: document.getElementById('ep_serie').value,
-                    op: document.getElementById('ep_op').value,
-                    cliente: document.getElementById('ep_cliente').value,
-                    obra: document.getElementById('ep_obra').value,
-                    quadro: document.getElementById('ep_quadro').value,
-                    proposta: document.getElementById('ep_proposta').value,
-                    d_envio: document.getElementById('ep_d_envio').value,
-                    d_eletrico: document.getElementById('ep_d_eletrico').value,
-                    d_mecanico: document.getElementById('ep_d_mecanico').value,
-                    d_entrega: document.getElementById('ep_d_entrega').value,
+                    serie: document.getElementById('ep_serie').value, op: document.getElementById('ep_op').value,
+                    cliente: document.getElementById('ep_cliente').value, obra: document.getElementById('ep_obra').value,
+                    quadro: document.getElementById('ep_quadro').value, proposta: document.getElementById('ep_proposta').value,
+                    d_envio: document.getElementById('ep_d_envio').value, d_eletrico: document.getElementById('ep_d_eletrico').value,
+                    d_mecanico: document.getElementById('ep_d_mecanico').value, d_entrega: document.getElementById('ep_d_entrega').value,
                     status: document.getElementById('ep_status').value,
                     motivo: document.getElementById('ep_status').value === 'Não Entregue' ? document.getElementById('ep_motivo').value : '',
-                    envio_ok: document.getElementById('ep_envio_ok').checked,
-                    eletrico_ok: document.getElementById('ep_eletrico_ok').checked,
-                    mecanico_ok: document.getElementById('ep_mecanico_ok').checked
+                    envio_ok: document.getElementById('ep_envio_ok').checked, eletrico_ok: document.getElementById('ep_eletrico_ok').checked, mecanico_ok: document.getElementById('ep_mecanico_ok').checked
                 };
             } else if (modulo === 'pagamentos') {
-                updateData = {
-                    serie: document.getElementById('epa_serie').value,
-                    cliente: document.getElementById('epa_cliente').value,
-                    data: document.getElementById('epa_data').value,
-                    status: document.getElementById('epa_status').value
-                };
+                updateData = { serie: document.getElementById('epa_serie').value, cliente: document.getElementById('epa_cliente').value, data: document.getElementById('epa_data').value, status: document.getElementById('epa_status').value };
             } else if (modulo === 'compras') {
-                updateData = {
-                    obra: document.getElementById('ec_obra').value,
-                    fornecedor: document.getElementById('ec_fornecedor').value,
-                    itens: document.getElementById('ec_itens').value,
-                    entrega: document.getElementById('ec_entrega').value,
-                    faturamento_calc: document.getElementById('ec_faturamento_calc').value,
-                    status: document.getElementById('ec_status').value
-                };
+                updateData = { obra: document.getElementById('ec_obra').value, fornecedor: document.getElementById('ec_fornecedor').value, itens: document.getElementById('ec_itens').value, entrega: document.getElementById('ec_entrega').value, faturamento_calc: document.getElementById('ec_faturamento_calc').value, status: document.getElementById('ec_status').value };
             }
-
             db.collection(modulo).doc(idDoc).update(updateData).then(() => {
-                showToast("Registro atualizado com sucesso!", "success");
-                fecharModalEdicao();
+                showToast("Registro atualizado com sucesso!", "success"); fecharModalEdicao();
             }).catch(err => { showToast("Erro ao atualizar: " + err.message, "error"); });
         }
 
         function toggleMotivoEdit() {
-            const st = document.getElementById('ep_status').value;
-            const div = document.getElementById('ep_motivo_div');
-            if(st === 'Não Entregue') {
-                div.classList.remove('hidden');
-            } else {
-                div.classList.add('hidden');
-                document.getElementById('ep_motivo').value = '';
-            }
+            if(document.getElementById('ep_status').value === 'Não Entregue') { document.getElementById('ep_motivo_div').classList.remove('hidden'); } 
+            else { document.getElementById('ep_motivo_div').classList.add('hidden'); document.getElementById('ep_motivo').value = ''; }
         }
 
         // ==========================================
-        // 5. FUNÇÕES ERP REUTILIZÁVEIS (AUTOCOMPLETE)
+        // AUTOCOMPLETE ERP
         // ==========================================
         function filtrarPedidos(termo) {
             const query = termo.toUpperCase();
             if (!query) return pedidos;
-            return pedidos.filter(p => 
-                (p.serie && p.serie.toUpperCase().includes(query)) || 
-                (p.cliente && p.cliente.toUpperCase().includes(query)) ||
-                (p.obra && p.obra.toUpperCase().includes(query))
-            );
+            return pedidos.filter(p => (p.serie && p.serie.toUpperCase().includes(query)) || (p.cliente && p.cliente.toUpperCase().includes(query)) || (p.obra && p.obra.toUpperCase().includes(query)));
         }
 
         function mostrarAutocomplete(modulo) {
             const inputId = modulo === 'pagamentos' ? 'pag_serie' : 'c_obra';
-            const termo = document.getElementById(inputId).value;
-            renderizarDropdown(modulo, filtrarPedidos(termo));
+            renderizarDropdown(modulo, filtrarPedidos(document.getElementById(inputId).value));
         }
 
-        function filtrarAutocomplete(modulo, termo) {
-            renderizarDropdown(modulo, filtrarPedidos(termo));
-        }
+        function filtrarAutocomplete(modulo, termo) { renderizarDropdown(modulo, filtrarPedidos(termo)); }
 
         function renderizarDropdown(modulo, listaFiltrada) {
-            const dropdownId = `dropdown-${modulo}`;
-            const dropdown = document.getElementById(dropdownId);
-            dropdown.innerHTML = '';
-
+            const dropdown = document.getElementById(`dropdown-${modulo}`); dropdown.innerHTML = '';
             if (listaFiltrada.length === 0) {
                 dropdown.innerHTML = `<div class="p-3 text-xs text-slate-500 text-center font-medium">Nenhum pedido correspondente.<br>Pode digitar livremente!</div>`;
-                dropdown.classList.remove('hidden');
-                return;
+                dropdown.classList.remove('hidden'); return;
             }
-
             listaFiltrada.forEach(p => {
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs border-b border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors";
-                
-                if (modulo === 'compras') {
-                    item.innerHTML = `<span class="font-black text-brand dark:text-blue-400 truncate max-w-[150px]">${p.obra || '-'}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold text-[10px] uppercase">Ref: #${p.serie}</span>`;
-                } else {
-                    item.innerHTML = `<span class="font-black text-brand dark:text-blue-400">#${p.serie}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[150px]">${p.cliente}</span>`;
-                }
-                
+                if (modulo === 'compras') item.innerHTML = `<span class="font-black text-brand dark:text-blue-400 truncate max-w-[150px]">${p.obra || '-'}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold text-[10px] uppercase">Ref: #${p.serie}</span>`;
+                else item.innerHTML = `<span class="font-black text-brand dark:text-blue-400">#${p.serie}</span> <span class="text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[150px]">${p.cliente}</span>`;
                 item.onclick = (e) => {
                     e.stopPropagation();
-                    if (modulo === 'pagamentos') {
-                        document.getElementById('pag_serie').value = p.serie;
-                        document.getElementById('pag_cliente').value = p.cliente;
-                        document.getElementById('dropdown-pagamentos').classList.add('hidden');
-                    } else if (modulo === 'compras') {
-                        document.getElementById('c_obra').value = p.obra || '-'; 
-                        document.getElementById('dropdown-compras').classList.add('hidden');
-                    }
+                    if (modulo === 'pagamentos') { document.getElementById('pag_serie').value = p.serie; document.getElementById('pag_cliente').value = p.cliente; document.getElementById('dropdown-pagamentos').classList.add('hidden'); } 
+                    else if (modulo === 'compras') { document.getElementById('c_obra').value = p.obra || '-'; document.getElementById('dropdown-compras').classList.add('hidden'); }
                 };
                 dropdown.appendChild(item);
             });
-
             dropdown.classList.remove('hidden');
         }
 
         function fecharAutocompletesExternos(e) {
-            if (!e.target.closest('#pag_serie') && !e.target.closest('#dropdown-pagamentos')) {
-                const drop = document.getElementById('dropdown-pagamentos');
-                if(drop) drop.classList.add('hidden');
-            }
-            if (!e.target.closest('#c_obra') && !e.target.closest('#dropdown-compras')) {
-                const drop = document.getElementById('dropdown-compras');
-                if(drop) drop.classList.add('hidden');
-            }
+            if (!e.target.closest('#pag_serie') && !e.target.closest('#dropdown-pagamentos')) { const drop = document.getElementById('dropdown-pagamentos'); if(drop) drop.classList.add('hidden'); }
+            if (!e.target.closest('#c_obra') && !e.target.closest('#dropdown-compras')) { const drop = document.getElementById('dropdown-compras'); if(drop) drop.classList.add('hidden'); }
         }
 
         // ==========================================
-        // 6. RENDERIZAÇÃO E FORMATAÇÃO (V2.0)
+        // RENDERIZAÇÃO DAS TABELAS
         // ==========================================
-        function formatData(dataISO) {
-            if(!dataISO) return '-';
-            const [y, m, d] = dataISO.split('-');
-            return `${d}/${m}/${y}`; 
-        }
-        
         function formatDataShort(dataISO) {
-            if(!dataISO) return '-';
-            const [y, m, d] = dataISO.split('-');
-            return `${d}/${m}`; 
+            if(!dataISO) return '-'; const [y, m, d] = dataISO.split('-'); return `${d}/${m}`; 
+        }
+
+        function formatData(dataISO) {
+            if(!dataISO) return '-'; const [y, m, d] = dataISO.split('-'); return `${d}/${m}/${y}`; 
         }
 
         function getEtapaClass(dataISO, isOk) {
@@ -1247,68 +1107,38 @@
 
         function renderCellEntrega(dataISO, statusGeral) {
             if(!dataISO) return '<td class="px-4 py-3 text-center">-</td>';
-            const todayStr = getTodayStr();
-            const formatada = formatDataShort(dataISO);
-            
+            const todayStr = getTodayStr(); const formatada = formatDataShort(dataISO);
             if(statusGeral === 'Entregue' || statusGeral === 'Pago' || statusGeral === 'Comprado' || statusGeral === 'Faturado e Entregue') 
                 return `<td class="px-4 py-3 font-medium text-slate-500 line-through opacity-70"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${formatada}</td>`;
-            
-            if(dataISO === todayStr) 
-                return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-alert/10 text-alert border border-alert/20"><i data-lucide="clock-4" class="w-3.5 h-3.5"></i> Hoje (${formatada})</span></td>`;
-            
-            if(dataISO < todayStr) 
-                return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-danger/10 text-danger border border-danger/20"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Atrasado (${formatada})</span></td>`;
-            
+            if(dataISO === todayStr) return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-alert/10 text-alert border border-alert/20"><i data-lucide="clock-4" class="w-3.5 h-3.5"></i> Hoje (${formatada})</span></td>`;
+            if(dataISO < todayStr) return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-danger/10 text-danger border border-danger/20"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Atrasado (${formatada})</span></td>`;
             return `<td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 text-slate-400"></i>${formatada}</td>`;
         }
 
         function getSelectColorClass(status) {
-            if(status === 'Entregue' || status === 'Pago' || status === 'Faturado e Entregue' || status === 'Faturado') 
-                return 'bg-success/10 text-success-700 dark:text-success-400 border-success/30';
-            if(status === 'Não Entregue') 
-                return 'bg-danger/10 text-danger-700 dark:text-danger-400 border-danger/30';
+            if(status === 'Entregue' || status === 'Pago' || status === 'Faturado e Entregue' || status === 'Faturado') return 'bg-success/10 text-success-700 dark:text-success-400 border-success/30';
+            if(status === 'Não Entregue') return 'bg-danger/10 text-danger-700 dark:text-danger-400 border-danger/30';
             return 'bg-alert/10 text-alert-700 dark:text-alert-400 border-alert/30';
         }
 
         function calculateDashboardKPIs() {
-            const total = pedidos.length;
-            const todayStr = getTodayStr();
-            let concluidos = 0, atrasados = 0, pendentes = 0;
-
-            pedidos.forEach(p => {
-                if (p.status === 'Entregue') concluidos++;
-                else {
-                    pendentes++;
-                    if (p.d_entrega && p.d_entrega < todayStr) atrasados++;
-                }
-            });
-
-            document.getElementById('kpi-total').innerText = total;
-            document.getElementById('kpi-pendentes').innerText = pendentes;
-            document.getElementById('kpi-atrasados').innerText = atrasados;
-            document.getElementById('kpi-concluidos').innerText = concluidos;
+            const todayStr = getTodayStr(); let concluidos = 0, atrasados = 0, pendentes = 0;
+            pedidos.forEach(p => { if (p.status === 'Entregue') concluidos++; else { pendentes++; if (p.d_entrega && p.d_entrega < todayStr) atrasados++; } });
+            document.getElementById('kpi-total').innerText = pedidos.length; document.getElementById('kpi-pendentes').innerText = pendentes;
+            document.getElementById('kpi-atrasados').innerText = atrasados; document.getElementById('kpi-concluidos').innerText = concluidos;
         }
 
         function renderAll() {
             calculateDashboardKPIs();
 
-            // RENDER PEDIDOS
-            const tPedidos = document.getElementById('tabelaPedidos');
-            tPedidos.innerHTML = '';
-            if(pedidos.length === 0) {
-                tPedidos.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhum pedido cadastrado.</td></tr>`;
-            } else {
+            // PEDIDOS
+            const tPedidos = document.getElementById('tabelaPedidos'); tPedidos.innerHTML = '';
+            if(pedidos.length === 0) tPedidos.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhum pedido cadastrado.</td></tr>`;
+            else {
                 pedidos.forEach((p, index) => {
                     const colorClass = getSelectColorClass(p.status);
-                    let statusHtml = `
-                        <select onchange="updateStatusPedido('${p.idDoc}', this.value)" class="mt-1 border rounded-lg px-3 py-2 sm:py-1.5 text-xs font-bold cursor-pointer outline-none transition-colors w-full ${colorClass}">
-                            <option value="Pendente" ${p.status === 'Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
-                            <option value="Entregue" ${p.status === 'Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option>
-                            <option value="Não Entregue" ${p.status === 'Não Entregue'?'selected':''} class="text-slate-800">🔴 Não Entregue</option>
-                        </select>
-                    `;
+                    let statusHtml = `<select onchange="updateStatusPedido('${p.idDoc}', this.value)" class="mt-1 border rounded-lg px-3 py-2 sm:py-1.5 text-xs font-bold cursor-pointer outline-none transition-colors w-full ${colorClass}"> <option value="Pendente" ${p.status === 'Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option> <option value="Entregue" ${p.status === 'Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option> <option value="Não Entregue" ${p.status === 'Não Entregue'?'selected':''} class="text-slate-800">🔴 Não Entregue</option> </select>`;
                     let motivoHtml = p.status === 'Não Entregue' ? `<div class="mt-3"><div class="text-[10px] uppercase font-bold text-danger mb-1">Motivo:</div><textarea placeholder="Escreva o motivo..." onchange="updateMotivoPedido('${p.idDoc}', this.value)" class="border border-danger/30 bg-danger/5 rounded-lg p-2 w-full text-xs focus:outline-none focus:ring-1 focus:ring-danger text-slate-700 dark:text-slate-300 placeholder-danger/50 resize-none h-16">${p.motivo}</textarea></div>` : '';
-
                     tPedidos.innerHTML += `
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
                             <td class="px-4 py-4 font-black text-slate-400 dark:text-slate-600 align-top">${index + 1}</td>
@@ -1335,24 +1165,18 @@
                                 ${statusHtml}${motivoHtml}
                             </td>
                             <td class="px-4 py-4 text-center align-middle whitespace-nowrap">
-                                <button onclick="abrirModalEdicao('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
-                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
-                                </button>
-                                <button onclick="apagarItem('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
-                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                </button>
+                                <button onclick="abrirModalEdicao('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                                <button onclick="apagarItem('pedidos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                             </td>
                         </tr>
                     `;
                 });
             }
 
-            // RENDER PAGAMENTOS
-            const tPagamentos = document.getElementById('tabelaPagamentos');
-            tPagamentos.innerHTML = '';
-            if(pagamentos.length === 0){
-                tPagamentos.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhum lembrete cadastrado.</td></tr>`;
-            } else {
+            // PAGAMENTOS
+            const tPagamentos = document.getElementById('tabelaPagamentos'); tPagamentos.innerHTML = '';
+            if(pagamentos.length === 0) tPagamentos.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhum lembrete cadastrado.</td></tr>`;
+            else {
                 pagamentos.forEach(p => {
                     const colorClass = getSelectColorClass(p.status);
                     tPagamentos.innerHTML += `
@@ -1362,29 +1186,22 @@
                             ${renderCellEntrega(p.data, p.status)}
                             <td class="px-4 py-4">
                                 <select onchange="updateStatusGeral('pagamentos', '${p.idDoc}', this.value)" class="border rounded-lg px-3 py-2 sm:py-1.5 text-xs font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
-                                    <option value="Pendente" ${p.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
-                                    <option value="Pago" ${p.status==='Pago'?'selected':''} class="text-slate-800">🟢 Pago</option>
+                                    <option value="Pendente" ${p.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option> <option value="Pago" ${p.status==='Pago'?'selected':''} class="text-slate-800">🟢 Pago</option>
                                 </select>
                             </td>
                             <td class="px-4 py-4 text-center whitespace-nowrap">
-                                <button onclick="abrirModalEdicao('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
-                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
-                                </button>
-                                <button onclick="apagarItem('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
-                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                </button>
+                                <button onclick="abrirModalEdicao('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                                <button onclick="apagarItem('pagamentos', '${p.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                             </td>
                         </tr>
                     `;
                 });
             }
 
-            // RENDER COMPRAS
-            const tCompras = document.getElementById('tabelaCompras');
-            tCompras.innerHTML = '';
-            if(compras.length === 0){
-                tCompras.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhuma compra cadastrada.</td></tr>`;
-            } else {
+            // COMPRAS
+            const tCompras = document.getElementById('tabelaCompras'); tCompras.innerHTML = '';
+            if(compras.length === 0) tCompras.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 font-medium">Nenhuma compra cadastrada.</td></tr>`;
+            else {
                 compras.forEach(c => {
                     const colorClass = getSelectColorClass(c.status);
                     tCompras.innerHTML += `
@@ -1396,19 +1213,12 @@
                             ${renderCellEntrega(c.faturamento_calc, c.status)}
                             <td class="px-4 py-4">
                                 <select onchange="updateStatusGeral('compras', '${c.idDoc}', this.value)" class="border rounded-lg px-2 py-2 sm:py-1.5 text-[11px] font-bold outline-none cursor-pointer w-full transition-colors ${colorClass}">
-                                    <option value="Pendente" ${c.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option>
-                                    <option value="Faturado" ${c.status==='Faturado'?'selected':''} class="text-slate-800">🔵 Faturado</option>
-                                    <option value="Entregue" ${c.status==='Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option>
-                                    <option value="Faturado e Entregue" ${c.status==='Faturado e Entregue'?'selected':''} class="text-slate-800">✅ Fat/Entregue</option>
+                                    <option value="Pendente" ${c.status==='Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option> <option value="Faturado" ${c.status==='Faturado'?'selected':''} class="text-slate-800">🔵 Faturado</option> <option value="Entregue" ${c.status==='Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option> <option value="Faturado e Entregue" ${c.status==='Faturado e Entregue'?'selected':''} class="text-slate-800">✅ Fat/Entregue</option>
                                 </select>
                             </td>
                             <td class="px-4 py-4 text-center whitespace-nowrap">
-                                <button onclick="abrirModalEdicao('compras', '${c.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro">
-                                    <i data-lucide="edit-2" class="w-5 h-5"></i>
-                                </button>
-                                <button onclick="apagarItem('compras', '${c.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro">
-                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                </button>
+                                <button onclick="abrirModalEdicao('compras', '${c.idDoc}')" class="text-slate-300 hover:text-blue-500 p-2.5 sm:p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Editar Registro"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                                <button onclick="apagarItem('compras', '${c.idDoc}')" class="text-slate-300 hover:text-danger p-2.5 sm:p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100" title="Apagar Registro"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                             </td>
                         </tr>
                     `;
@@ -1416,23 +1226,14 @@
             }
 
             lucide.createIcons();
-            
-            // FASE 1: ACIONA GERAÇÃO DE NOTIFICAÇÕES APÓS O RENDER
-            checkNotifications(); 
+            checkNotifications(); // Central Automática ativada aqui
         }
 
-        // Search Filters
         function filterTable(inputEl, tableId) {
-            const filter = inputEl.value.toUpperCase();
-            const trs = document.getElementById(tableId).getElementsByTagName("tr");
+            const filter = inputEl.value.toUpperCase(); const trs = document.getElementById(tableId).getElementsByTagName("tr");
             for (let i = 0; i < trs.length; i++) {
                 if (trs[i].getElementsByTagName("td").length > 0) {
-                    const txtValue = trs[i].textContent || trs[i].innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        trs[i].style.display = "";
-                    } else {
-                        trs[i].style.display = "none";
-                    }
+                    trs[i].style.display = (trs[i].textContent || trs[i].innerText).toUpperCase().indexOf(filter) > -1 ? "" : "none";
                 }
             }
         }
@@ -1447,36 +1248,20 @@
         }
 
         // ==========================================
-        // EXPORTAÇÃO PROFISSIONAL: EXCEL E PDF
+        // EXPORTAÇÃO EXCEL E PDF
         // ==========================================
         function gerarNomeArquivo(prefixo, extensao) {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const y = now.getFullYear();
-            const h = String(now.getHours()).padStart(2, '0');
-            const min = String(now.getMinutes()).padStart(2, '0');
-            return `${prefixo}_${y}-${m}-${d}_${h}-${min}.${extensao}`;
+            const now = new Date(); const d = String(now.getDate()).padStart(2, '0'); const m = String(now.getMonth() + 1).padStart(2, '0'); const y = now.getFullYear(); const h = String(now.getHours()).padStart(2, '0'); const min = String(now.getMinutes()).padStart(2, '0'); return `${prefixo}_${y}-${m}-${d}_${h}-${min}.${extensao}`;
         }
 
         function exportarExcel(tipo) {
             const arrayDados = tipo === 'pedidos' ? pedidos : compras;
             if(arrayDados.length === 0) { showToast('Não há dados para exportar.', 'warning'); return; }
-
             const exportData = arrayDados.map(row => {
-                if (tipo === 'pedidos') {
-                    return {
-                        "Série": row.serie, "OP": row.op || '-', "Cliente": row.cliente, "Obra": row.obra, "Quadro": row.quadro, "Proposta": row.proposta,
-                        "Data Envio": formatData(row.d_envio), "Data Elétrico": formatData(row.d_eletrico), "Data Mecânico": formatData(row.d_mecanico), "Entrega Limite": formatData(row.d_entrega),
-                        "Status Final": row.status
-                    };
-                } else {
-                    return { "Obra": row.obra || '-', "Fornecedor": row.fornecedor, "Itens / Materiais": row.itens, "Data Entrega": formatData(row.entrega), "Data Faturamento": formatData(row.faturamento_calc), "Status": row.status };
-                }
+                if (tipo === 'pedidos') { return { "Série": row.serie, "OP": row.op || '-', "Cliente": row.cliente, "Obra": row.obra, "Quadro": row.quadro, "Proposta": row.proposta, "Data Envio": formatData(row.d_envio), "Data Elétrico": formatData(row.d_eletrico), "Data Mecânico": formatData(row.d_mecanico), "Entrega Limite": formatData(row.d_entrega), "Status Final": row.status }; } 
+                else { return { "Obra": row.obra || '-', "Fornecedor": row.fornecedor, "Itens / Materiais": row.itens, "Data Entrega": formatData(row.entrega), "Data Faturamento": formatData(row.faturamento_calc), "Status": row.status }; }
             });
-
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
-            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(exportData); const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, `Relatório de ${tipo === 'pedidos' ? 'Pedidos' : 'Compras'}`);
             worksheet['!cols'] = Object.keys(exportData[0]).map(key => ({ wch: Math.max(key.length + 5, 18) }));
             XLSX.writeFile(workbook, gerarNomeArquivo(tipo.charAt(0).toUpperCase() + tipo.slice(1), 'xlsx'));
@@ -1484,78 +1269,37 @@
         }
 
         function exportarPDF(tipo) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape'); 
-            const arrayDados = tipo === 'pedidos' ? pedidos : compras;
-
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape'); const arrayDados = tipo === 'pedidos' ? pedidos : compras;
             if(arrayDados.length === 0) { showToast('Não há dados para exportar.', 'warning'); return; }
-
-            const username = localStorage.getItem('neivas_logado') || 'Usuário Desconhecido';
-            const dataAtual = new Date().toLocaleString('pt-BR');
-
-            doc.setFontSize(18); doc.setTextColor(22, 59, 140); 
-            doc.text(`Relatório de ${tipo === 'pedidos' ? 'Pedidos' : 'Compras'} - Neiva's`, 14, 20);
-            doc.setFontSize(10); doc.setTextColor(100, 100, 100);
-            doc.text(`Documento gerado por: ${username} | Em: ${dataAtual}`, 14, 28);
-
+            doc.setFontSize(18); doc.setTextColor(22, 59, 140); doc.text(`Relatório de ${tipo === 'pedidos' ? 'Pedidos' : 'Compras'} - Neiva's`, 14, 20);
+            doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text(`Documento gerado por: ${localStorage.getItem('neivas_logado') || 'Usuário Desconhecido'} | Em: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
             const columns = tipo === 'pedidos' ? ["Série", "OP", "Cliente", "Obra", "Quadro", "Proposta", "Status"] : ["Obra", "Fornecedor", "Itens", "Data Entrega", "Faturamento", "Status"];
-            const rows = arrayDados.map(row => {
-                if(tipo === 'pedidos') return [row.serie, row.op || '-', row.cliente, row.obra, row.quadro, row.proposta, row.status];
-                else return [row.obra || '-', row.fornecedor, row.itens || '-', formatData(row.entrega), formatData(row.faturamento_calc), row.status];
-            });
-
+            const rows = arrayDados.map(row => { if(tipo === 'pedidos') return [row.serie, row.op || '-', row.cliente, row.obra, row.quadro, row.proposta, row.status]; else return [row.obra || '-', row.fornecedor, row.itens || '-', formatData(row.entrega), formatData(row.faturamento_calc), row.status]; });
             doc.autoTable({
-                startY: 35, head: [columns], body: rows, theme: 'striped',
-                headStyles: { fillColor: [22, 59, 140], textColor: 255, fontStyle: 'bold' },
+                startY: 35, head: [columns], body: rows, theme: 'striped', headStyles: { fillColor: [22, 59, 140], textColor: 255, fontStyle: 'bold' },
                 styles: { fontSize: 9, cellPadding: 3 }, alternateRowStyles: { fillColor: [244, 247, 251] }, margin: { top: 35 },
-                didDrawPage: function (data) {
-                    doc.setFontSize(8);
-                    doc.text('Página ' + doc.internal.getNumberOfPages(), data.settings.margin.left, (doc.internal.pageSize.height ? doc.internal.pageSize.height : doc.internal.pageSize.getHeight()) - 10);
-                }
+                didDrawPage: function (data) { doc.setFontSize(8); doc.text('Página ' + doc.internal.getNumberOfPages(), data.settings.margin.left, (doc.internal.pageSize.height ? doc.internal.pageSize.height : doc.internal.pageSize.getHeight()) - 10); }
             });
-            doc.save(gerarNomeArquivo(tipo.charAt(0).toUpperCase() + tipo.slice(1), 'pdf'));
-            showToast(`Documento PDF de ${tipo} gerado com sucesso!`, 'success');
+            doc.save(gerarNomeArquivo(tipo.charAt(0).toUpperCase() + tipo.slice(1), 'pdf')); showToast(`Documento PDF de ${tipo} gerado com sucesso!`, 'success');
         }
 
         // ==========================================
-        // 7. TOASTS E ALERTAS (NÃO REMOVIDO)
+        // TOASTS
         // ==========================================
         function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let bgClass = "bg-white dark:bg-darkCard border-l-4 border-brand text-slate-800 dark:text-slate-200";
-            let icon = "<i data-lucide='info' class='w-5 h-5 text-brand'></i>";
-            
-            if (type === 'success') {
-                bgClass = "bg-white dark:bg-darkCard border-l-4 border-success text-slate-800 dark:text-slate-200";
-                icon = "<i data-lucide='check-circle' class='w-5 h-5 text-success'></i>";
-            } else if (type === 'error' || type === 'danger') {
-                bgClass = "bg-white dark:bg-darkCard border-l-4 border-danger text-slate-800 dark:text-slate-200";
-                icon = "<i data-lucide='alert-octagon' class='w-5 h-5 text-danger'></i>";
-            } else if (type === 'warning') {
-                bgClass = "bg-white dark:bg-darkCard border-l-4 border-alert text-slate-800 dark:text-slate-200";
-                icon = "<i data-lucide='alert-triangle' class='w-5 h-5 text-alert'></i>";
-            }
-
+            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
+            let bgClass = "bg-white dark:bg-darkCard border-l-4 border-brand text-slate-800 dark:text-slate-200"; let icon = "<i data-lucide='info' class='w-5 h-5 text-brand'></i>";
+            if (type === 'success') { bgClass = "bg-white dark:bg-darkCard border-l-4 border-success text-slate-800 dark:text-slate-200"; icon = "<i data-lucide='check-circle' class='w-5 h-5 text-success'></i>"; } 
+            else if (type === 'error' || type === 'danger') { bgClass = "bg-white dark:bg-darkCard border-l-4 border-danger text-slate-800 dark:text-slate-200"; icon = "<i data-lucide='alert-octagon' class='w-5 h-5 text-danger'></i>"; } 
+            else if (type === 'warning') { bgClass = "bg-white dark:bg-darkCard border-l-4 border-alert text-slate-800 dark:text-slate-200"; icon = "<i data-lucide='alert-triangle' class='w-5 h-5 text-alert'></i>"; }
             toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${bgClass} transform transition-all duration-300 translate-x-full opacity-0`;
-            toast.innerHTML = `${icon} <p class="text-sm font-semibold">${message}</p>`;
-            
-            container.appendChild(toast);
-            lucide.createIcons({ root: toast });
-
-            setTimeout(() => { toast.classList.remove('translate-x-full', 'opacity-0'); }, 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-x-full');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            toast.innerHTML = `${icon} <p class="text-sm font-semibold">${message}</p>`; container.appendChild(toast); lucide.createIcons({ root: toast });
+            setTimeout(() => { toast.classList.remove('translate-x-full', 'opacity-0'); }, 10); setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-full'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
         // ==========================================
-        // 8. FASE 1: CENTRAL DE NOTIFICAÇÕES NATIVA
+        // CENTRAL DE NOTIFICAÇÕES (PREMIUM REDESIGN)
         // ==========================================
-        
-        // Estrutura de dados na memória
         let centralNotificacoes = [];
         let notificacoesLidas = JSON.parse(localStorage.getItem('neivas_notificacoes_lidas')) || [];
         let filtroNotifAtual = 'todas';
@@ -1564,164 +1308,112 @@
             if (!targetDateStr) return 0;
             const [ty, tm, td] = targetDateStr.split('-');
             const target = new Date(ty, tm - 1, td);
-            
-            // Pega data local de hoje, zerando as horas para calcular apenas os dias cheios
             const [hy, hm, hd] = getTodayStr().split('-');
             const today = new Date(hy, hm - 1, hd);
-            
             return Math.floor((today - target) / (1000 * 60 * 60 * 24));
         }
 
-        // Acionado globalmente ao final do renderAll (ou seja, reage ao onSnapshot)
         function checkNotifications() {
-            centralNotificacoes = []; // Limpa cache para reconstrução em memória
-            const hoje = getTodayStr();
-            const amanha = getTomorrowStr();
+            centralNotificacoes = [];
+            const hoje = getTodayStr(); const amanha = getTomorrowStr();
 
-            // PEDIDOS
             pedidos.filter(p => p.status === 'Pendente').forEach(p => {
                 if (!p.d_entrega) return;
                 const idUnico = `pedido_entrega_${p.idDoc}`;
-                
-                if (p.d_entrega < hoje) {
-                    addNotificacao(idUnico, 'pedido', 'urgente', '🔴 Pedido atrasado', `Pedido #${p.serie} está atrasado.`, `Obra: ${p.obra}\nAtrasado há ${calculateDaysLate(p.d_entrega)} dias.`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
-                } else if (p.d_entrega === hoje) {
-                    addNotificacao(idUnico, 'pedido', 'hoje', '🟠 Pedido vence hoje', `Pedido #${p.serie} vence hoje.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
-                } else if (p.d_entrega === amanha) {
-                    addNotificacao(idUnico, 'pedido', 'amanha', '🟡 Pedido vence amanhã', `Pedido #${p.serie} vence amanhã.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
-                }
+                if (p.d_entrega < hoje) addNotificacao(idUnico, 'pedido', 'urgente', 'Pedido atrasado', `Pedido #${p.serie} está atrasado.`, `Obra: ${p.obra}\nAtrasado há ${calculateDaysLate(p.d_entrega)} dias`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
+                else if (p.d_entrega === hoje) addNotificacao(idUnico, 'pedido', 'hoje', 'Pedido vence hoje', `Pedido #${p.serie} vence hoje.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
+                else if (p.d_entrega === amanha) addNotificacao(idUnico, 'pedido', 'amanha', 'Pedido vence amanhã', `Pedido #${p.serie} vence amanhã.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
             });
 
-            // PAGAMENTOS
             pagamentos.filter(p => p.status === 'Pendente').forEach(p => {
                 if (!p.data) return;
                 const idUnico = `pagamento_venc_${p.idDoc}`;
-                
-                if (p.data < hoje) {
-                    addNotificacao(idUnico, 'pagamento', 'urgente', '🔴 Pagamento atrasado', `Pagamento atrasado.`, `Cliente: ${p.cliente}\nVencido há ${calculateDaysLate(p.data)} dias.`, p.data, 'pagamentos', p.idDoc, p.serie);
-                } else if (p.data === hoje) {
-                    addNotificacao(idUnico, 'pagamento', 'hoje', '🟠 Pagamento vence hoje', `Pagamento de ${p.cliente} vence hoje.`, '', p.data, 'pagamentos', p.idDoc, p.serie);
-                } else if (p.data === amanha) {
-                    addNotificacao(idUnico, 'pagamento', 'amanha', '🟡 Pagamento vence amanhã', `Pagamento de ${p.cliente} vence amanhã.`, '', p.data, 'pagamentos', p.idDoc, p.serie);
-                }
+                if (p.data < hoje) addNotificacao(idUnico, 'pagamento', 'urgente', 'Pagamento atrasado', `Cliente: ${p.cliente}`, `Vencido há ${calculateDaysLate(p.data)} dias`, p.data, 'pagamentos', p.idDoc, p.serie);
+                else if (p.data === hoje) addNotificacao(idUnico, 'pagamento', 'hoje', 'Pagamento vence hoje', `Cliente: ${p.cliente}`, '', p.data, 'pagamentos', p.idDoc, p.serie);
+                else if (p.data === amanha) addNotificacao(idUnico, 'pagamento', 'amanha', 'Pagamento vence amanhã', `Cliente: ${p.cliente}`, '', p.data, 'pagamentos', p.idDoc, p.serie);
             });
 
-            // COMPRAS
             compras.filter(c => c.status === 'Pendente').forEach(c => {
                 if (!c.entrega) return;
                 const idUnico = `compra_entrega_${c.idDoc}`;
-                
-                if (c.entrega < hoje) {
-                    addNotificacao(idUnico, 'compra', 'urgente', '🔴 Compra atrasada', `Compra atrasada.`, `Obra: ${c.obra || '-'}\nFornecedor: ${c.fornecedor}\nAtrasada há ${calculateDaysLate(c.entrega)} dias.`, c.entrega, 'compras', c.idDoc, c.obra);
-                } else if (c.entrega === hoje) {
-                    addNotificacao(idUnico, 'compra', 'hoje', '🟠 Compra vence hoje', `Entrega da compra da obra ${c.obra || '-'} é hoje.`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
-                } else if (c.entrega === amanha) {
-                    addNotificacao(idUnico, 'compra', 'amanha', '🟡 Compra vence amanhã', `Entrega da compra da obra ${c.obra || '-'} é amanhã.`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
-                }
+                if (c.entrega < hoje) addNotificacao(idUnico, 'compra', 'urgente', 'Compra atrasada', `Obra: ${c.obra || '-'}\nFornecedor: ${c.fornecedor}`, `Atrasada há ${calculateDaysLate(c.entrega)} dias`, c.entrega, 'compras', c.idDoc, c.obra);
+                else if (c.entrega === hoje) addNotificacao(idUnico, 'compra', 'hoje', 'Compra chega hoje', `Entrega da obra ${c.obra || '-'}`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
+                else if (c.entrega === amanha) addNotificacao(idUnico, 'compra', 'amanha', 'Compra chega amanhã', `Entrega da obra ${c.obra || '-'}`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
             });
 
             atualizarBadgeSino();
-            if(!document.getElementById('notifCenterPanel').classList.contains('translate-x-full')) {
-                renderizarInterfaceCentral();
-            }
+            if(!document.getElementById('notifCenterPanel').classList.contains('translate-x-full')) { renderizarInterfaceCentral(); }
         }
 
         function addNotificacao(id, tipo, prioridade, titulo, msg, detalhes, dataRef, modulo, idDoc, textoBusca) {
             centralNotificacoes.push({
-                id: id,
-                tipo: tipo,
-                prioridade: prioridade,
-                titulo: titulo,
-                mensagem: msg,
-                detalhes: detalhes,
-                data: dataRef,
-                lida: notificacoesLidas.includes(id),
-                modulo: modulo,
-                registroId: idDoc,
-                buscaText: textoBusca || ''
+                id, tipo, prioridade, titulo, mensagem: msg, detalhes, data: dataRef,
+                lida: notificacoesLidas.includes(id), modulo, registroId: idDoc, buscaText: textoBusca || ''
             });
         }
 
         function atualizarBadgeSino() {
             const unread = centralNotificacoes.filter(n => !n.lida).length;
             const badge = document.getElementById('notifBadge');
+            const hBadge = document.getElementById('headerUnreadCount');
             
             if (unread > 0) {
                 badge.innerText = unread > 99 ? '99+' : unread;
                 badge.classList.remove('hidden');
+                if(hBadge) { hBadge.innerText = unread === 1 ? '1 nova' : `${unread} novas`; hBadge.classList.remove('hidden'); }
             } else {
                 badge.classList.add('hidden');
+                if(hBadge) hBadge.classList.add('hidden');
             }
         }
 
-        // Acionado ao clicar no sino
-        function checkNotificationsManually() {
-            toggleNotificationCenter();
-        }
+        function checkNotificationsManually() { toggleNotificationCenter(); }
 
         function toggleNotificationCenter(forceClose = false) {
             const panel = document.getElementById('notifCenterPanel');
             const overlay = document.getElementById('notifCenterOverlay');
-            
-            const isClosed = panel.classList.contains('translate-x-full') || panel.classList.contains('hidden');
+            const isClosed = panel.classList.contains('opacity-0') || panel.classList.contains('hidden');
             
             if (forceClose || !isClosed) {
-                panel.classList.add('translate-x-full', 'sm:opacity-0', 'sm:scale-95');
-                panel.classList.remove('sm:translate-x-0');
+                panel.classList.add('opacity-0', 'scale-95', '-translate-y-2', 'pointer-events-none');
+                panel.classList.remove('scale-100', 'translate-y-0');
                 overlay.classList.add('opacity-0');
-                setTimeout(() => {
-                    panel.classList.add('hidden');
-                    overlay.classList.add('hidden');
-                }, 300);
+                setTimeout(() => { panel.classList.add('hidden'); overlay.classList.add('hidden'); }, 200);
             } else {
                 renderizarInterfaceCentral();
-                panel.classList.remove('hidden');
+                panel.classList.remove('hidden', 'pointer-events-none');
                 overlay.classList.remove('hidden');
-                setTimeout(() => {
-                    panel.classList.remove('translate-x-full', 'sm:opacity-0', 'sm:scale-95');
-                    panel.classList.add('sm:translate-x-0');
-                    overlay.classList.remove('opacity-0');
-                }, 10);
+                void panel.offsetWidth; // Force Reflow para animação rodar suave
+                panel.classList.remove('opacity-0', 'scale-95', '-translate-y-2');
+                panel.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+                overlay.classList.remove('opacity-0');
             }
         }
 
         function setNotifFilter(filtro) {
             filtroNotifAtual = filtro;
-            
-            // Atualiza botões
             document.querySelectorAll('.nfilter-btn').forEach(btn => {
-                btn.classList.remove('bg-slate-800', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active-filter');
-                btn.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-400');
+                btn.className = 'nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap';
             });
-            
             const atvBtn = document.getElementById(`nFilter-${filtro}`);
-            if(atvBtn) {
-                atvBtn.classList.add('bg-slate-800', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active-filter');
-                atvBtn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-400');
-            }
-            
+            if(atvBtn) { atvBtn.className = 'nfilter-btn active-filter relative text-[11px] font-bold text-brand dark:text-blue-400 pb-2.5 border-b-2 border-brand dark:border-blue-400 transition-all whitespace-nowrap'; }
             renderizarInterfaceCentral();
         }
 
         function renderizarInterfaceCentral() {
-            const contadores = {
-                todas: centralNotificacoes.length,
-                urgente: centralNotificacoes.filter(n => n.prioridade === 'urgente').length,
-                hoje: centralNotificacoes.filter(n => n.prioridade === 'hoje').length,
-                amanha: centralNotificacoes.filter(n => n.prioridade === 'amanha').length
+            const counts = {
+                todas: centralNotificacoes.length, urgente: centralNotificacoes.filter(n => n.prioridade === 'urgente').length,
+                hoje: centralNotificacoes.filter(n => n.prioridade === 'hoje').length, amanha: centralNotificacoes.filter(n => n.prioridade === 'amanha').length
             };
 
-            document.getElementById('nFilter-todas').innerText = `Todas (${contadores.todas})`;
-            document.getElementById('nFilter-urgente').innerText = `🔴 Urgentes (${contadores.urgente})`;
-            document.getElementById('nFilter-hoje').innerText = `🟠 Hoje (${contadores.hoje})`;
-            document.getElementById('nFilter-amanha').innerText = `🟡 Amanhã (${contadores.amanha})`;
+            document.getElementById('nFilter-todas').innerText = `Todos (${counts.todas})`;
+            document.getElementById('nFilter-urgente').innerHTML = `<span class="text-danger mr-0.5">●</span> Urgentes (${counts.urgente})`;
+            document.getElementById('nFilter-hoje').innerHTML = `<span class="text-alert mr-0.5">●</span> Hoje (${counts.hoje})`;
+            document.getElementById('nFilter-amanha').innerHTML = `<span class="text-yellow-500 mr-0.5">●</span> Amanhã (${counts.amanha})`;
 
             let filtradas = centralNotificacoes;
-            if (filtroNotifAtual !== 'todas') {
-                filtradas = centralNotificacoes.filter(n => n.prioridade === filtroNotifAtual);
-            }
+            if (filtroNotifAtual !== 'todas') filtradas = centralNotificacoes.filter(n => n.prioridade === filtroNotifAtual);
 
-            // Ordem: Não lidas primeiro, depois prioridade
             const ordem = { 'urgente': 1, 'hoje': 2, 'amanha': 3 };
             filtradas.sort((a, b) => {
                 if(a.lida === b.lida) return ordem[a.prioridade] - ordem[b.prioridade];
@@ -1733,27 +1425,27 @@
 
             if (filtradas.length === 0) {
                 listaEl.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-48 text-center text-slate-400 dark:text-slate-500">
-                        <i data-lucide="check-circle-2" class="w-12 h-12 mb-3 opacity-50 text-success"></i>
-                        <p class="font-bold text-sm">Tudo em dia!</p>
-                        <p class="text-xs mt-1">Não existem pendências no momento.</p>
+                    <div class="flex flex-col items-center justify-center h-full min-h-[250px] text-center px-4">
+                        <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
+                            <i data-lucide="check" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Tudo em dia</h4>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Não existem pendências no momento.</p>
                     </div>
                 `;
-                lucide.createIcons({ root: listaEl });
-                return;
+                lucide.createIcons({ root: listaEl }); return;
             }
 
             filtradas.forEach(n => {
                 const isUnread = !n.lida;
                 
-                // Configuração visual
-                let borda = '', dotColor = '';
-                if(n.prioridade === 'urgente') { borda = 'border-danger'; dotColor = 'bg-danger'; }
-                else if(n.prioridade === 'hoje') { borda = 'border-alert'; dotColor = 'bg-alert'; }
-                else { borda = 'border-yellow-400'; dotColor = 'bg-yellow-400'; }
+                let barColor = '', iconName = '';
+                if(n.prioridade === 'urgente') { barColor = 'bg-danger'; iconName = 'alert-circle'; }
+                else if(n.prioridade === 'hoje') { barColor = 'bg-alert'; iconName = 'clock'; }
+                else { barColor = 'bg-yellow-400'; iconName = 'calendar-clock'; }
 
-                const bgClass = isUnread ? 'bg-white dark:bg-darkCard' : 'bg-slate-50/50 dark:bg-slate-900/30 opacity-70';
-                const borderClass = isUnread ? `border-l-4 ${borda}` : 'border-l-4 border-transparent';
+                const bgClass = isUnread ? 'bg-white dark:bg-darkCard' : 'bg-slate-50/40 dark:bg-slate-800/20';
+                const opacityClass = isUnread ? '' : 'opacity-70';
                 
                 let textBtn = 'Ver registro';
                 if(n.modulo === 'pedidos') textBtn = 'Ver pedido';
@@ -1761,122 +1453,98 @@
                 if(n.modulo === 'compras') textBtn = 'Ver compra';
 
                 listaEl.innerHTML += `
-                    <div class="relative p-4 rounded-xl border border-slate-100 dark:border-slate-800 ${bgClass} ${borderClass} transition-all mb-2 hover:shadow cursor-default" onclick="marcarUnicaComoLida('${n.id}', false)">
-                        ${isUnread ? `<span class="absolute top-3.5 right-3.5 w-2 h-2 rounded-full ${dotColor}"></span>` : ''}
-                        <h4 class="text-sm font-black text-slate-800 dark:text-slate-200 mb-1 ${isUnread ? '' : 'font-semibold'}">${n.titulo}</h4>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 font-medium whitespace-pre-line">${n.mensagem}</p>
-                        ${n.detalhes ? `<p class="text-[11px] uppercase font-bold text-slate-500 mt-1.5 whitespace-pre-line">${n.detalhes}</p>` : ''}
+                    <div class="relative flex overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800/60 ${bgClass} transition-all duration-200 hover:shadow-md cursor-default group" onclick="marcarUnicaComoLida('${n.id}', false)">
                         
-                        <div class="mt-3.5">
-                            <button onclick="acionarVerRegistro(event, '${n.id}', '${n.modulo}', '${n.buscaText}')" class="text-xs font-bold text-brand hover:text-brandHover dark:text-blue-400 dark:hover:text-blue-300 transition-colors inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg hover:-translate-y-0.5">
-                                [${textBtn}] <i data-lucide="external-link" class="w-3 h-3"></i>
-                            </button>
+                        <!-- Premium Priority Strip -->
+                        <div class="w-1 shrink-0 ${barColor}"></div>
+                        
+                        <div class="flex-1 p-3.5 sm:p-4 flex flex-col relative ${opacityClass}">
+                            <!-- Dot Unread -->
+                            ${isUnread ? `<div class="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-brand dark:bg-blue-400 shadow-[0_0_6px_rgba(22,59,140,0.5)]"></div>` : ''}
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 text-slate-400 dark:text-slate-500">
+                                    <i data-lucide="${iconName}" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 pr-4">
+                                    <h4 class="text-[13px] font-bold ${isUnread ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'} leading-tight tracking-tight">${n.titulo}</h4>
+                                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1.5 whitespace-pre-line leading-relaxed">${n.mensagem}</p>
+                                    ${n.detalhes ? `<p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1.5 uppercase tracking-wider whitespace-pre-line">${n.detalhes}</p>` : ''}
+                                    
+                                    <div class="mt-3.5">
+                                        <button onclick="acionarVerRegistro(event, '${n.id}', '${n.modulo}', '${n.buscaText}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-md hover:bg-white dark:hover:bg-slate-700 hover:text-brand dark:hover:text-blue-400 hover:shadow-sm transition-all transform hover:-translate-y-[1px]">
+                                            ${textBtn} <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
             });
-            
             lucide.createIcons({ root: listaEl });
         }
 
-        // Função chamada ao clicar diretamente no botão de [Ver ...]
         window.acionarVerRegistro = function(event, id, modulo, textoBusca) {
-            event.stopPropagation(); // Previne acionar a div container
+            event.stopPropagation();
             marcarUnicaComoLida(id, true);
             toggleNotificationCenter(true);
-            
             switchTab(modulo);
-            
             setTimeout(() => {
                 const searchInput = document.querySelector(`#content-${modulo} input[type="text"]`);
-                if (searchInput && textoBusca) {
-                    searchInput.value = textoBusca;
-                    filterGlobal(textoBusca);
-                }
+                if (searchInput && textoBusca) { searchInput.value = textoBusca; filterGlobal(textoBusca); }
             }, 100);
         }
 
-        // Marca como lida
         window.marcarUnicaComoLida = function(id, viaBotao) {
             if (!notificacoesLidas.includes(id)) {
                 notificacoesLidas.push(id);
                 localStorage.setItem('neivas_notificacoes_lidas', JSON.stringify(notificacoesLidas));
-                const alvo = centralNotificacoes.find(n => n.id === id);
-                if(alvo) alvo.lida = true;
-                
-                atualizarBadgeSino();
-                if(!viaBotao) renderizarInterfaceCentral();
+                const alvo = centralNotificacoes.find(n => n.id === id); if(alvo) alvo.lida = true;
+                atualizarBadgeSino(); if(!viaBotao) renderizarInterfaceCentral();
             }
         }
 
-        // Marca todas como lidas
         window.marcarTodasComoLidas = function() {
             let marcou = false;
             centralNotificacoes.forEach(n => {
-                if (!n.lida) {
-                    n.lida = true;
-                    if (!notificacoesLidas.includes(n.id)) {
-                        notificacoesLidas.push(n.id);
-                        marcou = true;
-                    }
-                }
+                if (!n.lida) { n.lida = true; if (!notificacoesLidas.includes(n.id)) { notificacoesLidas.push(n.id); marcou = true; } }
             });
-            
             if(marcou) {
                 localStorage.setItem('neivas_notificacoes_lidas', JSON.stringify(notificacoesLidas));
-                atualizarBadgeSino();
-                renderizarInterfaceCentral();
+                atualizarBadgeSino(); renderizarInterfaceCentral();
             }
         }
 
         // ==========================================
-        // 9. MODAIS EXISTENTES (CONFIG / EXCLUSÃO)
+        // CONFIG E MODAIS (NÃO REMOVIDO)
         // ==========================================
         let modalConfirmCallback = null;
         function showModal(title, message, isConfirm, callback = null) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('modalTitle').innerText = title; document.getElementById('modalMessage').innerText = message;
             const cancelBtn = document.getElementById('modalCancelBtn');
-            if (isConfirm) cancelBtn.classList.remove('hidden');
-            else cancelBtn.classList.add('hidden');
-            modalConfirmCallback = callback;
-            document.getElementById('customModal').classList.remove('hidden');
+            if (isConfirm) cancelBtn.classList.remove('hidden'); else cancelBtn.classList.add('hidden');
+            modalConfirmCallback = callback; document.getElementById('customModal').classList.remove('hidden');
         }
 
         function closeModal() { document.getElementById('customModal').classList.add('hidden'); modalConfirmCallback = null; }
         function confirmModal() { if (modalConfirmCallback) modalConfirmCallback(); closeModal(); }
 
         function limparDados() {
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authModal').classList.remove('hidden');
-            const el = document.getElementById('relatoriosSubmenu');
-            if(el && el.classList.contains('max-h-96')) toggleMenu('relatoriosSubmenu');
+            document.getElementById('authPassword').value = ''; document.getElementById('authModal').classList.remove('hidden');
+            const el = document.getElementById('relatoriosSubmenu'); if(el && el.classList.contains('max-h-96')) toggleMenu('relatoriosSubmenu');
         }
 
         function confirmAuth() {
             if (document.getElementById('authPassword').value === '123') {
-                showToast('Ação restrita. Utilize exclusões individuais na tabela.', 'warning');
-                document.getElementById('authModal').classList.add('hidden');
-            } else {
-                showToast('Senha de administrador incorreta!', 'error');
-            }
+                showToast('Ação restrita. Utilize exclusões individuais na tabela.', 'warning'); document.getElementById('authModal').classList.add('hidden');
+            } else { showToast('Senha de administrador incorreta!', 'error'); }
         }
 
         function toggleMenu(id) {
-            const el = document.getElementById(id);
-            const arrow = document.getElementById('relatoriosArrow');
-            if(!el) return;
-            
-            const isClosed = el.classList.contains('max-h-0');
-            if(isClosed) {
-                el.classList.remove('max-h-0', 'opacity-0');
-                el.classList.add('max-h-96', 'opacity-100');
-                if(arrow) arrow.classList.add('rotate-180');
-            } else {
-                el.classList.remove('max-h-96', 'opacity-100');
-                el.classList.add('max-h-0', 'opacity-0');
-                if(arrow) arrow.classList.remove('rotate-180');
-            }
+            const el = document.getElementById(id); const arrow = document.getElementById('relatoriosArrow'); if(!el) return;
+            if(el.classList.contains('max-h-0')) { el.classList.remove('max-h-0', 'opacity-0'); el.classList.add('max-h-96', 'opacity-100'); if(arrow) arrow.classList.add('rotate-180'); } 
+            else { el.classList.remove('max-h-96', 'opacity-100'); el.classList.add('max-h-0', 'opacity-0'); if(arrow) arrow.classList.remove('rotate-180'); }
         }
     </script>
 </body>
