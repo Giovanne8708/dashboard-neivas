@@ -42,6 +42,7 @@
                         success: '#22C55E',
                         alert: '#F59E0B',
                         danger: '#EF4444',
+                        info: '#3B82F6',
                         background: '#F4F7FB',
                         card: '#FFFFFF',
                         text: '#1E293B',
@@ -53,6 +54,7 @@
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-in': 'slideIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-subtle': 'pulseSubtle 2s infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -66,6 +68,10 @@
                         slideUp: {
                             '0%': { transform: 'translateY(20px)', opacity: '0' },
                             '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        pulseSubtle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.6' }
                         }
                     }
                 }
@@ -83,15 +89,16 @@
         
         /* Ocultar barra horizontal na Central de Notificações */
         .hide-scroll-x::-webkit-scrollbar:horizontal { display: none; }
+        .hide-scroll-x { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* Glassmorphism effects */
         .glass {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
         }
         .dark .glass {
-            background: rgba(30, 41, 59, 0.7);
+            background: rgba(30, 41, 59, 0.75);
         }
 
         /* Toast notifications container */
@@ -106,10 +113,17 @@
             max-width: 90vw;
         }
 
-        /* Correção Mobile - Evitar quebra feia de tabelas */
-        .table-mobile-scroll {
-            -webkit-overflow-scrolling: touch;
+        /* Highlight de Destaque para linhas da tabela */
+        @keyframes highlightRow {
+            0% { background-color: rgba(59, 130, 246, 0.25); }
+            100% { background-color: transparent; }
         }
+        .row-highlight {
+            animation: highlightRow 2.5s ease-out;
+        }
+
+        /* Correção Mobile */
+        .table-mobile-scroll { -webkit-overflow-scrolling: touch; }
 
         @media print {
             header, form, nav, button, #sidebar, #toast-container, #customModal, #authModal, #loginScreen, #editModal, .no-print, #notifCenterOverlay, #notifCenterPanel {
@@ -261,12 +275,12 @@
 
                 <div class="flex items-center gap-1 sm:gap-3">
                     <!-- BOTÃO DO SINO -->
-                    <button onclick="checkNotificationsManually()" class="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Notificações">
+                    <button onclick="checkNotificationsManually()" class="relative p-2.5 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none" title="Central de Alertas">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                         <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-danger text-white text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 border-white dark:border-darkCard shadow-sm transition-all transform scale-100 min-w-[20px] text-center">0</span>
                     </button>
                     
-                    <button onclick="toggleTheme()" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Alternar Tema">
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Alternar Tema">
                         <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
                     </button>
 
@@ -302,7 +316,7 @@
                 </div>
 
                 <!-- Cards KPI -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 w-full">
                     <div class="bg-white dark:bg-darkCard rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all flex items-center gap-4 group">
                         <div class="w-12 h-12 shrink-0 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-brand dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <i data-lucide="file-box" class="w-6 h-6"></i>
@@ -339,6 +353,11 @@
                             <p id="kpi-concluidos" class="text-2xl font-black text-slate-800 dark:text-white leading-none mt-1 truncate">0</p>
                         </div>
                     </div>
+                </div>
+
+                <!-- CARD RESUMO DE ALERTAS OPERACIONAIS (INTEGRADO NO DASHBOARD) -->
+                <div id="dashboardAlertsSummary" class="mb-8 bg-white dark:bg-darkCard rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <!-- Injetado via JS -->
                 </div>
                 
                 <div class="bg-gradient-to-r from-brand to-brandHover rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
@@ -655,36 +674,41 @@
         </div>
     </div>
 
-    <!-- ================= CENTRAL DE NOTIFICAÇÕES PREMIUM ================= -->
+    <!-- ================= CENTRAL DE NOTIFICAÇÕES (UI ENTERPRISE) ================= -->
     <div id="notifCenterOverlay" onclick="toggleNotificationCenter(true)" class="hidden fixed inset-0 z-[550] opacity-0 transition-opacity duration-200 bg-slate-900/40 backdrop-blur-[2px]"></div>
 
     <!-- Container Painel -->
-    <div id="notifCenterPanel" class="hidden fixed left-[10px] right-[10px] sm:left-auto sm:right-6 top-20 w-[calc(100vw-20px)] sm:w-[420px] max-h-[80vh] sm:max-h-[620px] bg-white/95 dark:bg-darkCard/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5),0_8px_24px_rgba(0,0,0,0.4)] z-[600] flex flex-col transition-all duration-200 origin-top sm:origin-top-right transform scale-95 opacity-0 -translate-y-2 overflow-hidden">
+    <div id="notifCenterPanel" class="hidden fixed left-[10px] right-[10px] sm:left-auto sm:right-6 top-20 w-[calc(100vw-20px)] sm:w-[420px] max-h-[85vh] sm:max-h-[640px] bg-white/95 dark:bg-darkCard/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12),0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5),0_8px_24px_rgba(0,0,0,0.4)] z-[600] flex flex-col transition-all duration-200 origin-top sm:origin-top-right transform scale-95 opacity-0 -translate-y-2 overflow-hidden">
         
         <!-- Premium Header -->
         <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/60 flex items-start justify-between shrink-0 bg-white dark:bg-darkCard">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-blue-400 shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-blue-400 shrink-0">
                     <i data-lucide="bell" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <h3 class="text-base font-bold text-slate-800 dark:text-white leading-tight flex items-center gap-2">
-                        Notificações <span id="headerUnreadCount" class="hidden text-[10px] font-bold bg-brand dark:bg-blue-500 text-white px-1.5 py-0.5 rounded-full shadow-sm">0 novas</span>
+                        Notificações <span id="headerUnreadCount" class="hidden text-[10px] font-bold bg-brand dark:bg-blue-500 text-white px-2 py-0.5 rounded-full shadow-sm">0 novas</span>
                     </h3>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Central de alertas corporativos</p>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Central de alertas operacionais</p>
                 </div>
             </div>
             <button onclick="marcarTodasComoLidas()" class="text-[11px] font-bold text-slate-500 hover:text-brand dark:hover:text-blue-400 transition-colors flex items-center gap-1 mt-1 shrink-0 px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md">
-                Marcar lidas <i data-lucide="check" class="w-3 h-3"></i>
+                Marcar lidas <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
             </button>
         </div>
 
+        <!-- Faixa com Resumo dos Indicadores Totais -->
+        <div id="notifIndicatorsSummary" class="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+            <!-- Injetado via JS -->
+        </div>
+
         <!-- Premium Compact Filters -->
-        <div class="flex px-5 pt-3 gap-5 overflow-x-auto hide-scroll-x border-b border-slate-100 dark:border-slate-800/60 shrink-0 bg-slate-50/30 dark:bg-slate-900/20">
-            <button onclick="setNotifFilter('todas')" id="nFilter-todas" class="nfilter-btn active-filter relative text-[11px] font-bold text-brand dark:text-blue-400 pb-2.5 border-b-2 border-brand dark:border-blue-400 transition-all whitespace-nowrap">Todos (0)</button>
-            <button onclick="setNotifFilter('urgente')" id="nFilter-urgente" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Urgentes (0)</button>
-            <button onclick="setNotifFilter('hoje')" id="nFilter-hoje" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Hoje (0)</button>
-            <button onclick="setNotifFilter('amanha')" id="nFilter-amanha" class="nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap">Amanhã (0)</button>
+        <div class="flex px-4 pt-2.5 pb-2 gap-2 overflow-x-auto hide-scroll-x border-b border-slate-100 dark:border-slate-800/60 shrink-0 bg-white dark:bg-darkCard">
+            <button onclick="setNotifFilter('todas')" id="nFilter-todas" class="nfilter-btn active-filter text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand text-white dark:bg-blue-500 dark:text-white transition-all whitespace-nowrap">Todas (0)</button>
+            <button onclick="setNotifFilter('atrasado')" id="nFilter-atrasado" class="nfilter-btn text-[11px] font-bold px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap">Atrasados (0)</button>
+            <button onclick="setNotifFilter('hoje')" id="nFilter-hoje" class="nfilter-btn text-[11px] font-bold px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap">Hoje (0)</button>
+            <button onclick="setNotifFilter('proximo')" id="nFilter-proximo" class="nfilter-btn text-[11px] font-bold px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap">Próximos (0)</button>
         </div>
 
         <!-- List Content Area (Scrollable Only Here) -->
@@ -718,8 +742,10 @@
         }, true);
 
         // ==========================================
-        // 1. DADOS GLOBAIS E HELPERS
+        // 1. DADOS GLOBAIS & CONFIGURAÇÕES DE PRAZO
         // ==========================================
+        const DIAS_ALERTA_PROXIMO = 3; // Janela configurável de dias para alertas 'próximos'
+
         const usuariosCadastrados = [
             { email: 'juliana.samara@neivas.com', senha: '1206' },
             { email: 'operacional@neivas.com', senha: '123' }
@@ -729,6 +755,7 @@
         let pagamentos = [];
         let compras = [];
         
+        // Helper seguro de Datas sem colisão de fuso horário UTC (Local Pure Date)
         function getLocalDateString(offsetDays = 0) {
             const d = new Date();
             d.setDate(d.getDate() + offsetDays);
@@ -739,6 +766,53 @@
         }
         function getTodayStr() { return getLocalDateString(0); }
         function getTomorrowStr() { return getLocalDateString(1); }
+
+        function parsePureDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return null;
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+        }
+
+        function calcularDiferencaDias(dataISO) {
+            const targetDate = parsePureDate(dataISO);
+            if (!targetDate) return null;
+            
+            const todayDate = parsePureDate(getTodayStr());
+            const diffMs = targetDate.getTime() - todayDate.getTime();
+            return Math.round(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        // MOTOR CENTRAL DE CÁLCULO DE PRAZOS (Única Fonte da Verdade)
+        function analisarPrazo(dataISO, status, modulo = '') {
+            // Ignorar concluídos
+            if (status === 'Entregue' || status === 'Pago' || status === 'Faturado e Entregue') {
+                return { tipo: 'concluido', dias: 0, prioridade: 'ok' };
+            }
+
+            // Tratamento especial para falha operacional
+            if (status === 'Não Entregue') {
+                return { tipo: 'problema_operacional', dias: 0, prioridade: 'urgente' };
+            }
+
+            const diff = calcularDiferencaDias(dataISO);
+            if (diff === null) return { tipo: 'invalido', dias: 0, prioridade: 'ok' };
+
+            if (diff < 0) {
+                return { tipo: 'atrasado', dias: Math.abs(diff), prioridade: 'urgente' };
+            }
+            if (diff === 0) {
+                return { tipo: 'hoje', dias: 0, prioridade: 'hoje' };
+            }
+            if (diff === 1) {
+                return { tipo: 'amanha', dias: 1, prioridade: 'amanha' };
+            }
+            if (diff <= DIAS_ALERTA_PROXIMO) {
+                return { tipo: 'proximo', dias: diff, prioridade: 'proximo' };
+            }
+
+            return { tipo: 'futuro', dias: diff, prioridade: 'futuro' };
+        }
 
         const breadcrumbNames = {
             'dashboard': 'Visão Geral',
@@ -1086,7 +1160,7 @@
         }
 
         // ==========================================
-        // RENDERIZAÇÃO DAS TABELAS
+        // RENDERIZAÇÃO DAS TABELAS & CÉLULAS INTELIGENTES
         // ==========================================
         function formatDataShort(dataISO) {
             if(!dataISO) return '-'; const [y, m, d] = dataISO.split('-'); return `${d}/${m}`; 
@@ -1097,22 +1171,36 @@
         }
 
         function getEtapaClass(dataISO, isOk) {
-            const todayStr = getTodayStr();
             if(isOk) return 'text-success line-through opacity-70';
-            if(!dataISO) return 'text-slate-400';
-            if(dataISO === todayStr) return 'text-alert font-bold';
-            if(dataISO < todayStr) return 'text-danger font-bold';
+            const analise = analisarPrazo(dataISO, 'Pendente');
+            if(analise.tipo === 'atrasado') return 'text-danger font-bold';
+            if(analise.tipo === 'hoje') return 'text-alert font-bold';
+            if(analise.tipo === 'amanha' || analise.tipo === 'proximo') return 'text-blue-500 font-bold';
             return 'text-slate-600 dark:text-slate-300 font-medium';
         }
 
+        // Renderização Aprimorada com a Regra Única de Prazos
         function renderCellEntrega(dataISO, statusGeral) {
-            if(!dataISO) return '<td class="px-4 py-3 text-center">-</td>';
-            const todayStr = getTodayStr(); const formatada = formatDataShort(dataISO);
-            if(statusGeral === 'Entregue' || statusGeral === 'Pago' || statusGeral === 'Comprado' || statusGeral === 'Faturado e Entregue') 
-                return `<td class="px-4 py-3 font-medium text-slate-500 line-through opacity-70"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${formatada}</td>`;
-            if(dataISO === todayStr) return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-alert/10 text-alert border border-alert/20"><i data-lucide="clock-4" class="w-3.5 h-3.5"></i> Hoje (${formatada})</span></td>`;
-            if(dataISO < todayStr) return `<td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-bold bg-danger/10 text-danger border border-danger/20"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Atrasado (${formatada})</span></td>`;
-            return `<td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300"><i data-lucide="calendar" class="w-3 h-3 inline mr-1 text-slate-400"></i>${formatada}</td>`;
+            if(!dataISO) return '<td class="px-4 py-3 text-center text-slate-400">-</td>';
+            const formatada = formatData(dataISO);
+            const analise = analisarPrazo(dataISO, statusGeral);
+            
+            if(analise.tipo === 'concluido') 
+                return `<td class="px-4 py-3 font-medium text-slate-500 line-through opacity-70"><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1"></i>${formatada}</td>`;
+            
+            if(analise.tipo === 'atrasado') 
+                return `<td class="px-4 py-3"><span class="inline-flex flex-col"><span class="text-xs font-bold text-danger flex items-center gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Atrasado há ${analise.dias} ${analise.dias === 1 ? 'dia' : 'dias'}</span><span class="text-[10px] text-slate-400 font-mono">${formatada}</span></span></td>`;
+
+            if(analise.tipo === 'hoje') 
+                return `<td class="px-4 py-3"><span class="inline-flex flex-col"><span class="text-xs font-bold text-alert flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Hoje</span><span class="text-[10px] text-slate-400 font-mono">${formatada}</span></span></td>`;
+
+            if(analise.tipo === 'amanha') 
+                return `<td class="px-4 py-3"><span class="inline-flex flex-col"><span class="text-xs font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-1"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i> Amanhã</span><span class="text-[10px] text-slate-400 font-mono">${formatada}</span></span></td>`;
+
+            if(analise.tipo === 'proximo') 
+                return `<td class="px-4 py-3"><span class="inline-flex flex-col"><span class="text-xs font-bold text-blue-500 flex items-center gap-1"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Em ${analise.dias} dias</span><span class="text-[10px] text-slate-400 font-mono">${formatada}</span></span></td>`;
+            
+            return `<td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300"><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>${formatada}</td>`;
         }
 
         function getSelectColorClass(status) {
@@ -1122,10 +1210,19 @@
         }
 
         function calculateDashboardKPIs() {
-            const todayStr = getTodayStr(); let concluidos = 0, atrasados = 0, pendentes = 0;
-            pedidos.forEach(p => { if (p.status === 'Entregue') concluidos++; else { pendentes++; if (p.d_entrega && p.d_entrega < todayStr) atrasados++; } });
-            document.getElementById('kpi-total').innerText = pedidos.length; document.getElementById('kpi-pendentes').innerText = pendentes;
-            document.getElementById('kpi-atrasados').innerText = atrasados; document.getElementById('kpi-concluidos').innerText = concluidos;
+            let concluidos = 0, atrasados = 0, pendentes = 0;
+            pedidos.forEach(p => { 
+                const analise = analisarPrazo(p.d_entrega, p.status);
+                if (analise.tipo === 'concluido') concluidos++; 
+                else { 
+                    pendentes++; 
+                    if (analise.tipo === 'atrasado' || analise.tipo === 'problema_operacional') atrasados++; 
+                } 
+            });
+            document.getElementById('kpi-total').innerText = pedidos.length; 
+            document.getElementById('kpi-pendentes').innerText = pendentes;
+            document.getElementById('kpi-atrasados').innerText = atrasados; 
+            document.getElementById('kpi-concluidos').innerText = concluidos;
         }
 
         function renderAll() {
@@ -1140,7 +1237,7 @@
                     let statusHtml = `<select onchange="updateStatusPedido('${p.idDoc}', this.value)" class="mt-1 border rounded-lg px-3 py-2 sm:py-1.5 text-xs font-bold cursor-pointer outline-none transition-colors w-full ${colorClass}"> <option value="Pendente" ${p.status === 'Pendente'?'selected':''} class="text-slate-800">🟡 Pendente</option> <option value="Entregue" ${p.status === 'Entregue'?'selected':''} class="text-slate-800">🟢 Entregue</option> <option value="Não Entregue" ${p.status === 'Não Entregue'?'selected':''} class="text-slate-800">🔴 Não Entregue</option> </select>`;
                     let motivoHtml = p.status === 'Não Entregue' ? `<div class="mt-3"><div class="text-[10px] uppercase font-bold text-danger mb-1">Motivo:</div><textarea placeholder="Escreva o motivo..." onchange="updateMotivoPedido('${p.idDoc}', this.value)" class="border border-danger/30 bg-danger/5 rounded-lg p-2 w-full text-xs focus:outline-none focus:ring-1 focus:ring-danger text-slate-700 dark:text-slate-300 placeholder-danger/50 resize-none h-16">${p.motivo}</textarea></div>` : '';
                     tPedidos.innerHTML += `
-                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
+                        <tr id="row-pedidos-${p.idDoc}" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
                             <td class="px-4 py-4 font-black text-slate-400 dark:text-slate-600 align-top">${index + 1}</td>
                             <td class="px-4 py-4 align-top">
                                 <div class="font-black text-brand dark:text-blue-400 text-base tracking-tight mb-1">#${p.serie}</div>
@@ -1180,7 +1277,7 @@
                 pagamentos.forEach(p => {
                     const colorClass = getSelectColorClass(p.status);
                     tPagamentos.innerHTML += `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-b border-slate-100 dark:border-slate-800">
+                        <tr id="row-pagamentos-${p.idDoc}" class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-b border-slate-100 dark:border-slate-800">
                             <td class="px-4 py-4 font-black text-brand dark:text-blue-400">#${p.serie}</td>
                             <td class="px-4 py-4 font-bold text-slate-800 dark:text-slate-200 whitespace-normal">${p.cliente}</td>
                             ${renderCellEntrega(p.data, p.status)}
@@ -1205,7 +1302,7 @@
                 compras.forEach(c => {
                     const colorClass = getSelectColorClass(c.status);
                     tCompras.innerHTML += `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-b border-slate-100 dark:border-slate-800">
+                        <tr id="row-compras-${c.idDoc}" class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group border-b border-slate-100 dark:border-slate-800">
                             <td class="px-4 py-4"><div class="font-black text-brand dark:text-blue-400 whitespace-normal uppercase">${c.obra || '-'}</div></td>
                             <td class="px-4 py-4 font-bold text-slate-800 dark:text-slate-200 whitespace-normal"><i data-lucide="truck" class="w-4 h-4 inline mr-1 text-slate-400"></i>${c.fornecedor}</td>
                             <td class="px-4 py-4 text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-normal"><i data-lucide="package" class="w-4 h-4 inline mr-1 text-slate-400"></i>${c.itens || '-'}</td>
@@ -1226,7 +1323,9 @@
             }
 
             lucide.createIcons();
-            checkNotifications(); // Central Automática ativada aqui
+            
+            // MOTOR ÚNICO: Reconstrução dos Alertas a cada alteração no Firebase
+            checkNotifications(); 
         }
 
         function filterTable(inputEl, tableId) {
@@ -1298,57 +1397,120 @@
         }
 
         // ==========================================
-        // CENTRAL DE NOTIFICAÇÕES (PREMIUM REDESIGN)
+        // SISTEMA DE ALERTAS OPERACIONAIS PREMIUM
         // ==========================================
         let centralNotificacoes = [];
         let notificacoesLidas = JSON.parse(localStorage.getItem('neivas_notificacoes_lidas')) || [];
         let filtroNotifAtual = 'todas';
 
-        function calculateDaysLate(targetDateStr) {
-            if (!targetDateStr) return 0;
-            const [ty, tm, td] = targetDateStr.split('-');
-            const target = new Date(ty, tm - 1, td);
-            const [hy, hm, hd] = getTodayStr().split('-');
-            const today = new Date(hy, hm - 1, hd);
-            return Math.floor((today - target) / (1000 * 60 * 60 * 24));
-        }
-
         function checkNotifications() {
             centralNotificacoes = [];
-            const hoje = getTodayStr(); const amanha = getTomorrowStr();
+            
+            // 1. PROCESSAR PEDIDOS
+            pedidos.forEach(p => {
+                const analise = analisarPrazo(p.d_entrega, p.status, 'pedidos');
+                if (analise.tipo === 'concluido' || analise.tipo === 'futuro' || analise.tipo === 'invalido') return;
 
-            pedidos.filter(p => p.status === 'Pendente').forEach(p => {
-                if (!p.d_entrega) return;
-                const idUnico = `pedido_entrega_${p.idDoc}`;
-                if (p.d_entrega < hoje) addNotificacao(idUnico, 'pedido', 'urgente', 'Pedido atrasado', `Pedido #${p.serie} está atrasado.`, `Obra: ${p.obra}\nAtrasado há ${calculateDaysLate(p.d_entrega)} dias`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
-                else if (p.d_entrega === hoje) addNotificacao(idUnico, 'pedido', 'hoje', 'Pedido vence hoje', `Pedido #${p.serie} vence hoje.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
-                else if (p.d_entrega === amanha) addNotificacao(idUnico, 'pedido', 'amanha', 'Pedido vence amanhã', `Pedido #${p.serie} vence amanhã.`, `Obra: ${p.obra}`, p.d_entrega, 'pedidos', p.idDoc, p.serie);
+                const idUnico = `pedidos_${p.idDoc}_${analise.tipo}`;
+                let titulo = '', msg = '', detalhes = `Obra: ${p.obra || '-'} • Cliente: ${p.cliente}`;
+
+                if (analise.tipo === 'problema_operacional') {
+                    titulo = 'Problema operacional';
+                    msg = `Pedido #${p.serie} marcado como Não Entregue.`;
+                } else if (analise.tipo === 'atrasado') {
+                    titulo = 'Pedido atrasado';
+                    msg = `Pedido #${p.serie} está atrasado há ${analise.dias} ${analise.dias === 1 ? 'dia' : 'dias'}.`;
+                    detalhes += `\nEntrega prevista: ${formatData(p.d_entrega)}`;
+                } else if (analise.tipo === 'hoje') {
+                    titulo = 'Entrega hoje';
+                    msg = `Pedido #${p.serie} tem entrega prevista para hoje.`;
+                    detalhes += `\nData limite: ${formatData(p.d_entrega)}`;
+                } else if (analise.tipo === 'amanha') {
+                    titulo = 'Entrega amanhã';
+                    msg = `Pedido #${p.serie} vence amanhã (Falta 1 dia).`;
+                } else if (analise.tipo === 'proximo') {
+                    titulo = 'Entrega próxima';
+                    msg = `Faltam ${analise.dias} dias para a entrega do Pedido #${p.serie}.`;
+                    detalhes += `\nData limite: ${formatData(p.d_entrega)}`;
+                }
+
+                addNotificacaoItem({
+                    id: idUnico, modulo: 'pedidos', idDoc: p.idDoc, tipo: analise.tipo, prioridade: analise.prioridade,
+                    titulo, mensagem: msg, detalhes, dataRef: p.d_entrega, buscaText: p.serie
+                });
             });
 
-            pagamentos.filter(p => p.status === 'Pendente').forEach(p => {
-                if (!p.data) return;
-                const idUnico = `pagamento_venc_${p.idDoc}`;
-                if (p.data < hoje) addNotificacao(idUnico, 'pagamento', 'urgente', 'Pagamento atrasado', `Cliente: ${p.cliente}`, `Vencido há ${calculateDaysLate(p.data)} dias`, p.data, 'pagamentos', p.idDoc, p.serie);
-                else if (p.data === hoje) addNotificacao(idUnico, 'pagamento', 'hoje', 'Pagamento vence hoje', `Cliente: ${p.cliente}`, '', p.data, 'pagamentos', p.idDoc, p.serie);
-                else if (p.data === amanha) addNotificacao(idUnico, 'pagamento', 'amanha', 'Pagamento vence amanhã', `Cliente: ${p.cliente}`, '', p.data, 'pagamentos', p.idDoc, p.serie);
+            // 2. PROCESSAR PAGAMENTOS
+            pagamentos.forEach(p => {
+                const analise = analisarPrazo(p.data, p.status, 'pagamentos');
+                if (analise.tipo === 'concluido' || analise.tipo === 'futuro' || analise.tipo === 'invalido') return;
+
+                const idUnico = `pagamentos_${p.idDoc}_${analise.tipo}`;
+                let titulo = '', msg = '', detalhes = `Cliente: ${p.cliente}`;
+
+                if (analise.tipo === 'atrasado') {
+                    titulo = 'Pagamento atrasado';
+                    msg = `Pagamento do cliente ${p.cliente} está vencido há ${analise.dias} ${analise.dias === 1 ? 'dia' : 'dias'}.`;
+                    detalhes += `\nVencimento: ${formatData(p.data)}`;
+                } else if (analise.tipo === 'hoje') {
+                    titulo = 'Pagamento vence hoje';
+                    msg = `Pagamento de ${p.cliente} vence hoje.`;
+                } else if (analise.tipo === 'amanha') {
+                    titulo = 'Pagamento vence amanhã';
+                    msg = `Pagamento de ${p.cliente} vence amanhã.`;
+                } else if (analise.tipo === 'proximo') {
+                    titulo = 'Pagamento próximo';
+                    msg = `Faltam ${analise.dias} dias para o vencimento (${p.cliente}).`;
+                    detalhes += `\nVencimento: ${formatData(p.data)}`;
+                }
+
+                addNotificacaoItem({
+                    id: idUnico, modulo: 'pagamentos', idDoc: p.idDoc, tipo: analise.tipo, prioridade: analise.prioridade,
+                    titulo, mensagem: msg, detalhes, dataRef: p.data, buscaText: p.serie || p.cliente
+                });
             });
 
-            compras.filter(c => c.status === 'Pendente').forEach(c => {
-                if (!c.entrega) return;
-                const idUnico = `compra_entrega_${c.idDoc}`;
-                if (c.entrega < hoje) addNotificacao(idUnico, 'compra', 'urgente', 'Compra atrasada', `Obra: ${c.obra || '-'}\nFornecedor: ${c.fornecedor}`, `Atrasada há ${calculateDaysLate(c.entrega)} dias`, c.entrega, 'compras', c.idDoc, c.obra);
-                else if (c.entrega === hoje) addNotificacao(idUnico, 'compra', 'hoje', 'Compra chega hoje', `Entrega da obra ${c.obra || '-'}`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
-                else if (c.entrega === amanha) addNotificacao(idUnico, 'compra', 'amanha', 'Compra chega amanhã', `Entrega da obra ${c.obra || '-'}`, `Fornecedor: ${c.fornecedor}`, c.entrega, 'compras', c.idDoc, c.obra);
+            // 3. PROCESSAR COMPRAS
+            compras.forEach(c => {
+                const analise = analisarPrazo(c.entrega, c.status, 'compras');
+                if (analise.tipo === 'concluido' || analise.tipo === 'futuro' || analise.tipo === 'invalido') return;
+
+                const idUnico = `compras_${c.idDoc}_${analise.tipo}`;
+                let titulo = '', msg = '', detalhes = `Obra: ${c.obra || '-'} • Fornecedor: ${c.fornecedor}`;
+
+                if (analise.tipo === 'atrasado') {
+                    titulo = 'Compra atrasada';
+                    msg = `Entrega de materiais da obra ${c.obra || '-'} atrasada há ${analise.dias} ${analise.dias === 1 ? 'dia' : 'dias'}.`;
+                    detalhes += `\nPrevisão: ${formatData(c.entrega)}`;
+                } else if (analise.tipo === 'hoje') {
+                    titulo = 'Entrega de compra hoje';
+                    msg = `Entrega dos materiais da obra ${c.obra || '-'} é hoje.`;
+                } else if (analise.tipo === 'amanha') {
+                    titulo = 'Compra chega amanhã';
+                    msg = `Entrega de compra para obra ${c.obra || '-'} chega amanhã.`;
+                } else if (analise.tipo === 'proximo') {
+                    titulo = 'Compra próxima';
+                    msg = `Faltam ${analise.dias} dias para entrega da compra (Obra: ${c.obra || '-'}).`;
+                    detalhes += `\nPrevisão: ${formatData(c.entrega)}`;
+                }
+
+                addNotificacaoItem({
+                    id: idUnico, modulo: 'compras', idDoc: c.idDoc, tipo: analise.tipo, prioridade: analise.prioridade,
+                    titulo, mensagem: msg, detalhes, dataRef: c.entrega, buscaText: c.obra
+                });
             });
 
             atualizarBadgeSino();
-            if(!document.getElementById('notifCenterPanel').classList.contains('translate-x-full')) { renderizarInterfaceCentral(); }
+            renderDashboardAlertsSummary();
+            if(!document.getElementById('notifCenterPanel').classList.contains('hidden')) { 
+                renderizarInterfaceCentral(); 
+            }
         }
 
-        function addNotificacao(id, tipo, prioridade, titulo, msg, detalhes, dataRef, modulo, idDoc, textoBusca) {
+        function addNotificacaoItem(item) {
             centralNotificacoes.push({
-                id, tipo, prioridade, titulo, mensagem: msg, detalhes, data: dataRef,
-                lida: notificacoesLidas.includes(id), modulo, registroId: idDoc, buscaText: textoBusca || ''
+                ...item,
+                lida: notificacoesLidas.includes(item.id)
             });
         }
 
@@ -1367,6 +1529,62 @@
             }
         }
 
+        // Renderiza o Card no Overview principal
+        function renderDashboardAlertsSummary() {
+            const container = document.getElementById('dashboardAlertsSummary');
+            if (!container) return;
+
+            const counts = {
+                atrasados: centralNotificacoes.filter(n => n.prioridade === 'urgente').length,
+                hoje: centralNotificacoes.filter(n => n.prioridade === 'hoje').length,
+                amanha: centralNotificacoes.filter(n => n.prioridade === 'amanha').length,
+                proximos: centralNotificacoes.filter(n => n.prioridade === 'proximo').length
+            };
+
+            const totalAtivos = centralNotificacoes.length;
+
+            if (totalAtivos === 0) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 text-success flex items-center justify-center shrink-0">
+                            <i data-lucide="shield-check" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Operação em dia</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Nenhuma pendência crítica requer atenção imediata.</p>
+                        </div>
+                    </div>
+                    <button onclick="checkNotificationsManually()" class="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl transition-colors shrink-0">
+                        Ver histórico
+                    </button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 text-danger flex items-center justify-center shrink-0 animate-pulse-subtle">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                Alertas Operacionais
+                                <span class="text-[10px] font-black bg-danger/10 text-danger px-2 py-0.5 rounded-full">${totalAtivos} pendentes</span>
+                            </h4>
+                            <div class="flex flex-wrap items-center gap-3 mt-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                ${counts.atrasados > 0 ? `<span class="text-danger flex items-center gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> ${counts.atrasados} ${counts.atrasados === 1 ? 'atrasado' : 'atrasados'}</span>` : ''}
+                                ${counts.hoje > 0 ? `<span class="text-alert flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${counts.hoje} hoje</span>` : ''}
+                                ${counts.amanha > 0 ? `<span class="text-yellow-600 dark:text-yellow-400 flex items-center gap-1"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i> ${counts.amanha} amanhã</span>` : ''}
+                                ${counts.proximos > 0 ? `<span class="text-blue-500 flex items-center gap-1"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> ${counts.proximos} próximos</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="checkNotificationsManually()" class="w-full sm:w-auto bg-brand hover:bg-brandHover text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow transition-all flex items-center justify-center gap-1.5 shrink-0">
+                        Ver alertas <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                `;
+            }
+            lucide.createIcons({ root: container });
+        }
+
         function checkNotificationsManually() { toggleNotificationCenter(); }
 
         function toggleNotificationCenter(forceClose = false) {
@@ -1375,15 +1593,15 @@
             const isClosed = panel.classList.contains('opacity-0') || panel.classList.contains('hidden');
             
             if (forceClose || !isClosed) {
-                panel.classList.add('opacity-0', 'scale-95', '-translate-y-2', 'pointer-events-none');
+                panel.classList.add('opacity-0', 'scale-95', '-translate-y-2');
                 panel.classList.remove('scale-100', 'translate-y-0');
                 overlay.classList.add('opacity-0');
                 setTimeout(() => { panel.classList.add('hidden'); overlay.classList.add('hidden'); }, 200);
             } else {
                 renderizarInterfaceCentral();
-                panel.classList.remove('hidden', 'pointer-events-none');
+                panel.classList.remove('hidden');
                 overlay.classList.remove('hidden');
-                void panel.offsetWidth; // Force Reflow para animação rodar suave
+                void panel.offsetWidth;
                 panel.classList.remove('opacity-0', 'scale-95', '-translate-y-2');
                 panel.classList.add('opacity-100', 'scale-100', 'translate-y-0');
                 overlay.classList.remove('opacity-0');
@@ -1393,28 +1611,48 @@
         function setNotifFilter(filtro) {
             filtroNotifAtual = filtro;
             document.querySelectorAll('.nfilter-btn').forEach(btn => {
-                btn.className = 'nfilter-btn relative text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 pb-2.5 border-b-2 border-transparent transition-all whitespace-nowrap';
+                btn.className = 'nfilter-btn text-[11px] font-bold px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap';
             });
             const atvBtn = document.getElementById(`nFilter-${filtro}`);
-            if(atvBtn) { atvBtn.className = 'nfilter-btn active-filter relative text-[11px] font-bold text-brand dark:text-blue-400 pb-2.5 border-b-2 border-brand dark:border-blue-400 transition-all whitespace-nowrap'; }
+            if(atvBtn) { atvBtn.className = 'nfilter-btn active-filter text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand text-white dark:bg-blue-500 dark:text-white transition-all whitespace-nowrap'; }
             renderizarInterfaceCentral();
         }
 
         function renderizarInterfaceCentral() {
+            // Contadores por prioridade
             const counts = {
-                todas: centralNotificacoes.length, urgente: centralNotificacoes.filter(n => n.prioridade === 'urgente').length,
-                hoje: centralNotificacoes.filter(n => n.prioridade === 'hoje').length, amanha: centralNotificacoes.filter(n => n.prioridade === 'amanha').length
+                todas: centralNotificacoes.length,
+                atrasado: centralNotificacoes.filter(n => n.prioridade === 'urgente').length,
+                hoje: centralNotificacoes.filter(n => n.prioridade === 'hoje').length,
+                amanha: centralNotificacoes.filter(n => n.prioridade === 'amanha').length,
+                proximo: centralNotificacoes.filter(n => n.prioridade === 'proximo').length
             };
 
-            document.getElementById('nFilter-todas').innerText = `Todos (${counts.todas})`;
-            document.getElementById('nFilter-urgente').innerHTML = `<span class="text-danger mr-0.5">●</span> Urgentes (${counts.urgente})`;
-            document.getElementById('nFilter-hoje').innerHTML = `<span class="text-alert mr-0.5">●</span> Hoje (${counts.hoje})`;
-            document.getElementById('nFilter-amanha').innerHTML = `<span class="text-yellow-500 mr-0.5">●</span> Amanhã (${counts.amanha})`;
+            // Atualização dos botões de filtro
+            document.getElementById('nFilter-todas').innerText = `Todas (${counts.todas})`;
+            document.getElementById('nFilter-atrasado').innerText = `Atrasados (${counts.atrasado})`;
+            document.getElementById('nFilter-hoje').innerText = `Hoje (${counts.hoje})`;
+            document.getElementById('nFilter-proximo').innerText = `Próximos (${counts.proximo + counts.amanha})`;
+
+            // Faixa de resumo superior dentro do painel
+            const sumEl = document.getElementById('notifIndicatorsSummary');
+            if (sumEl) {
+                sumEl.innerHTML = `
+                    <span class="text-danger font-bold flex items-center gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> ${counts.atrasado} atrasados</span>
+                    <span class="text-alert font-bold flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${counts.hoje} hoje</span>
+                    <span class="text-yellow-600 dark:text-yellow-400 font-bold flex items-center gap-1"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i> ${counts.amanha} amanhã</span>
+                    <span class="text-blue-500 font-bold flex items-center gap-1"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> ${counts.proximo} próximos</span>
+                `;
+                lucide.createIcons({ root: sumEl });
+            }
 
             let filtradas = centralNotificacoes;
-            if (filtroNotifAtual !== 'todas') filtradas = centralNotificacoes.filter(n => n.prioridade === filtroNotifAtual);
+            if (filtroNotifAtual === 'atrasado') filtradas = centralNotificacoes.filter(n => n.prioridade === 'urgente');
+            else if (filtroNotifAtual === 'hoje') filtradas = centralNotificacoes.filter(n => n.prioridade === 'hoje');
+            else if (filtroNotifAtual === 'proximo') filtradas = centralNotificacoes.filter(n => n.prioridade === 'proximo' || n.prioridade === 'amanha');
 
-            const ordem = { 'urgente': 1, 'hoje': 2, 'amanha': 3 };
+            // Ordenação Hierárquica: Não lidas primeiro -> Criticos (Atrasados) -> Hoje -> Amanhã -> Próximos
+            const ordem = { 'urgente': 1, 'hoje': 2, 'amanha': 3, 'proximo': 4 };
             filtradas.sort((a, b) => {
                 if(a.lida === b.lida) return ordem[a.prioridade] - ordem[b.prioridade];
                 return a.lida ? 1 : -1;
@@ -1426,11 +1664,11 @@
             if (filtradas.length === 0) {
                 listaEl.innerHTML = `
                     <div class="flex flex-col items-center justify-center h-full min-h-[250px] text-center px-4">
-                        <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
-                            <i data-lucide="check" class="w-8 h-8"></i>
+                        <div class="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-3 text-success">
+                            <i data-lucide="check-circle-2" class="w-7 h-7"></i>
                         </div>
-                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Tudo em dia</h4>
-                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Não existem pendências no momento.</p>
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Tudo em dia!</h4>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Nenhuma pendência operacional no momento.</p>
                     </div>
                 `;
                 lucide.createIcons({ root: listaEl }); return;
@@ -1439,41 +1677,50 @@
             filtradas.forEach(n => {
                 const isUnread = !n.lida;
                 
-                let barColor = '', iconName = '';
-                if(n.prioridade === 'urgente') { barColor = 'bg-danger'; iconName = 'alert-circle'; }
-                else if(n.prioridade === 'hoje') { barColor = 'bg-alert'; iconName = 'clock'; }
-                else { barColor = 'bg-yellow-400'; iconName = 'calendar-clock'; }
+                let barColor = '', iconName = '', priorityColorClass = '';
+                if(n.prioridade === 'urgente') { barColor = 'bg-danger'; iconName = 'alert-circle'; priorityColorClass = 'text-danger'; }
+                else if(n.prioridade === 'hoje') { barColor = 'bg-alert'; iconName = 'clock'; priorityColorClass = 'text-alert'; }
+                else if(n.prioridade === 'amanha') { barColor = 'bg-yellow-500'; iconName = 'calendar-clock'; priorityColorClass = 'text-yellow-600 dark:text-yellow-400'; }
+                else { barColor = 'bg-blue-500'; iconName = 'calendar-days'; priorityColorClass = 'text-blue-500'; }
 
-                const bgClass = isUnread ? 'bg-white dark:bg-darkCard' : 'bg-slate-50/40 dark:bg-slate-800/20';
-                const opacityClass = isUnread ? '' : 'opacity-70';
+                const bgClass = isUnread ? 'bg-white dark:bg-darkCard' : 'bg-slate-50/50 dark:bg-slate-800/30 opacity-75';
                 
                 let textBtn = 'Ver registro';
                 if(n.modulo === 'pedidos') textBtn = 'Ver pedido';
                 if(n.modulo === 'pagamentos') textBtn = 'Ver pagamento';
                 if(n.modulo === 'compras') textBtn = 'Ver compra';
 
+                let modIcon = 'clipboard-list';
+                if(n.modulo === 'pagamentos') modIcon = 'circle-dollar-sign';
+                if(n.modulo === 'compras') modIcon = 'shopping-cart';
+
                 listaEl.innerHTML += `
-                    <div class="relative flex overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800/60 ${bgClass} transition-all duration-200 hover:shadow-md cursor-default group" onclick="marcarUnicaComoLida('${n.id}', false)">
+                    <div class="relative flex overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-700/80 ${bgClass} transition-all duration-200 hover:shadow-md cursor-default group" onclick="marcarUnicaComoLida('${n.id}', false)">
                         
-                        <!-- Premium Priority Strip -->
-                        <div class="w-1 shrink-0 ${barColor}"></div>
+                        <!-- Barra de Prioridade Lateral Premium -->
+                        <div class="w-1.5 shrink-0 ${barColor}"></div>
                         
-                        <div class="flex-1 p-3.5 sm:p-4 flex flex-col relative ${opacityClass}">
-                            <!-- Dot Unread -->
-                            ${isUnread ? `<div class="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-brand dark:bg-blue-400 shadow-[0_0_6px_rgba(22,59,140,0.5)]"></div>` : ''}
+                        <div class="flex-1 p-3.5 sm:p-4 flex flex-col relative">
+                            <!-- Indicador de Não Lida -->
+                            ${isUnread ? `<div class="absolute top-4 right-4 w-2 h-2 rounded-full ${barColor} shadow-sm"></div>` : ''}
                             
                             <div class="flex items-start gap-3">
-                                <div class="mt-0.5 text-slate-400 dark:text-slate-500">
+                                <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${priorityColorClass} shrink-0 mt-0.5">
                                     <i data-lucide="${iconName}" class="w-4 h-4"></i>
                                 </div>
-                                <div class="flex-1 pr-4">
-                                    <h4 class="text-[13px] font-bold ${isUnread ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'} leading-tight tracking-tight">${n.titulo}</h4>
-                                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1.5 whitespace-pre-line leading-relaxed">${n.mensagem}</p>
-                                    ${n.detalhes ? `<p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1.5 uppercase tracking-wider whitespace-pre-line">${n.detalhes}</p>` : ''}
+                                <div class="flex-1 pr-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                            <i data-lucide="${modIcon}" class="w-3 h-3"></i> ${n.modulo}
+                                        </span>
+                                    </div>
+                                    <h4 class="text-xs font-bold ${isUnread ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'} leading-tight">${n.titulo}</h4>
+                                    <p class="text-xs font-semibold ${priorityColorClass} mt-1">${n.mensagem}</p>
+                                    ${n.detalhes ? `<p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 whitespace-pre-line leading-relaxed">${n.detalhes}</p>` : ''}
                                     
-                                    <div class="mt-3.5">
-                                        <button onclick="acionarVerRegistro(event, '${n.id}', '${n.modulo}', '${n.buscaText}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-md hover:bg-white dark:hover:bg-slate-700 hover:text-brand dark:hover:text-blue-400 hover:shadow-sm transition-all transform hover:-translate-y-[1px]">
-                                            ${textBtn} <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                                    <div class="mt-3">
+                                        <button onclick="acionarVerRegistro(event, '${n.id}', '${n.modulo}', '${n.idDoc}', '${n.buscaText}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-all transform hover:-translate-y-0.5">
+                                            ${textBtn} <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -1485,34 +1732,60 @@
             lucide.createIcons({ root: listaEl });
         }
 
-        window.acionarVerRegistro = function(event, id, modulo, textoBusca) {
+        // Navegação e Localização do Registro no Módulo Correspondente
+        window.acionarVerRegistro = function(event, id, modulo, idDoc, textoBusca) {
             event.stopPropagation();
             marcarUnicaComoLida(id, true);
             toggleNotificationCenter(true);
+            
+            // Navega para a aba
             switchTab(modulo);
+            
             setTimeout(() => {
-                const searchInput = document.querySelector(`#content-${modulo} input[type="text"]`);
-                if (searchInput && textoBusca) { searchInput.value = textoBusca; filterGlobal(textoBusca); }
-            }, 100);
+                // Tenta localizar a linha pelo ID do Firebase
+                const targetRow = document.getElementById(`row-${modulo}-${idDoc}`);
+                if (targetRow) {
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetRow.classList.add('row-highlight');
+                    setTimeout(() => targetRow.classList.remove('row-highlight'), 2500);
+                } else {
+                    // Fallback para filtro de pesquisa se a tabela estiver paginada/filtrada
+                    const searchInput = document.querySelector(`#content-${modulo} input[type="text"]`);
+                    if (searchInput && textoBusca) { 
+                        searchInput.value = textoBusca; 
+                        filterGlobal(textoBusca); 
+                    }
+                }
+            }, 150);
         }
 
         window.marcarUnicaComoLida = function(id, viaBotao) {
             if (!notificacoesLidas.includes(id)) {
                 notificacoesLidas.push(id);
                 localStorage.setItem('neivas_notificacoes_lidas', JSON.stringify(notificacoesLidas));
-                const alvo = centralNotificacoes.find(n => n.id === id); if(alvo) alvo.lida = true;
-                atualizarBadgeSino(); if(!viaBotao) renderizarInterfaceCentral();
+                const alvo = centralNotificacoes.find(n => n.id === id); 
+                if(alvo) alvo.lida = true;
+                
+                atualizarBadgeSino(); 
+                if(!viaBotao) renderizarInterfaceCentral();
             }
         }
 
         window.marcarTodasComoLidas = function() {
             let marcou = false;
             centralNotificacoes.forEach(n => {
-                if (!n.lida) { n.lida = true; if (!notificacoesLidas.includes(n.id)) { notificacoesLidas.push(n.id); marcou = true; } }
+                if (!n.lida) { 
+                    n.lida = true; 
+                    if (!notificacoesLidas.includes(n.id)) { 
+                        notificacoesLidas.push(n.id); 
+                        marcou = true; 
+                    } 
+                }
             });
             if(marcou) {
                 localStorage.setItem('neivas_notificacoes_lidas', JSON.stringify(notificacoesLidas));
-                atualizarBadgeSino(); renderizarInterfaceCentral();
+                atualizarBadgeSino(); 
+                renderizarInterfaceCentral();
             }
         }
 
