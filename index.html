@@ -259,9 +259,9 @@
                 <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
 
                 <div class="flex items-center gap-1 sm:gap-3">
-                    <button onclick="checkNotificationsManually()" class="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Notificações">
+                    <button onclick="toggleNotificationCenter()" class="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Notificações">
                         <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span id="notifBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-alert rounded-full border-2 border-white dark:border-darkCard"></span>
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-danger text-white text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 border-white dark:border-darkCard shadow-sm transition-all transform scale-100"></span>
                     </button>
                     
                     <button onclick="toggleTheme()" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Alternar Tema">
@@ -655,6 +655,36 @@
             </div>
         </div>
     </div>
+    
+    <!-- Central de Notificações Overlay -->
+    <div id="notifCenterOverlay" onclick="toggleNotificationCenter()" class="hidden fixed inset-0 bg-slate-900/60 z-[550] backdrop-blur-sm transition-opacity opacity-0"></div>
+
+    <!-- Central de Notificações Panel -->
+    <div id="notifCenterPanel" class="hidden fixed top-0 right-0 bottom-0 w-full sm:w-[420px] bg-white dark:bg-darkCard sm:top-20 sm:bottom-auto sm:right-6 sm:max-h-[calc(100vh-100px)] sm:rounded-2xl shadow-2xl sm:border border-slate-200 dark:border-slate-700 z-[600] flex flex-col transition-transform transform translate-x-full sm:translate-x-0 sm:opacity-0 sm:scale-95 duration-300">
+        <!-- Header -->
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-800/50 sm:rounded-t-2xl">
+            <h3 class="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="bell-ring" class="w-5 h-5 text-brand"></i> Notificações
+            </h3>
+            <div class="flex items-center gap-3">
+                <button onclick="markAllNotifsAsRead()" class="text-xs font-bold text-brand hover:text-brandHover dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Ler todas</button>
+                <button onclick="toggleNotificationCenter()" class="sm:hidden p-1.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex px-4 py-3 gap-2 overflow-x-auto custom-scrollbar border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <button onclick="setNotifFilter('all')" id="nFilter-all" class="nfilter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-white dark:bg-white dark:text-slate-900 whitespace-nowrap transition-colors">Todas (0)</button>
+            <button onclick="setNotifFilter('urgent')" id="nFilter-urgent" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🔴 Urgentes (0)</button>
+            <button onclick="setNotifFilter('today')" id="nFilter-today" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🟠 Hoje (0)</button>
+            <button onclick="setNotifFilter('tomorrow')" id="nFilter-tomorrow" class="nfilter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">🟡 Amanhã (0)</button>
+        </div>
+
+        <!-- Content List -->
+        <div id="notifList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 bg-slate-50/50 dark:bg-darkBg/50 sm:rounded-b-2xl">
+            <!-- Items injected by JS -->
+        </div>
+    </div>
 
     <!-- Toast Notifications Container -->
     <div id="toast-container"></div>
@@ -737,7 +767,6 @@
                     pedidos.push({ idDoc: doc.id, ...doc.data() });
                 });
                 renderAll();
-                checkNotifications();
             });
 
             db.collection('pagamentos').onSnapshot((snapshot) => {
@@ -1422,6 +1451,9 @@
             }
 
             lucide.createIcons();
+            
+            // Dispara a checagem das notificações ao finalizar o render (Substitui lógica anterior)
+            checkNotifications();
         }
 
         // Search Filters
@@ -1602,31 +1634,257 @@
             }, 3000);
         }
 
-        let alertasGlobais = [];
+        // ==========================================
+        // NOVO SISTEMA: CENTRAL DE NOTIFICAÇÕES
+        // ==========================================
+        let notificationsData = [];
+        let readNotifIds = JSON.parse(localStorage.getItem('neivas_read_notifs')) || [];
+        let currentNotifFilter = 'all';
 
+        // Helper de Data Local para evitar problemas de Timezone
+        function getLocalDateStr(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        
+        function calculateDaysLate(targetDateStr) {
+            if (!targetDateStr) return 0;
+            const [ty, tm, td] = targetDateStr.split('-');
+            const target = new Date(ty, tm - 1, td);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const diff = today - target;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+
+        // Intercepta checkNotifications original para gerar a nova central
         function checkNotifications() {
-            let alertas = [];
-            pedidos.filter(p => p.status === 'Pendente').forEach(p => {
-                if(p.d_entrega === todayStr) alertas.push(`Pedido <strong class="text-alert font-mono">#${p.serie}</strong> vence hoje!`);
-                if(p.d_entrega < todayStr && p.d_entrega) alertas.push(`Pedido <strong class="text-danger font-mono">#${p.serie}</strong> está atrasado!`);
-            });
-            alertasGlobais = alertas;
-            const badge = document.getElementById('notifBadge');
-            
-            if (alertasGlobais.length > 0) {
-                if(badge) badge.classList.remove('hidden');
-            } else {
-                if(badge) badge.classList.add('hidden');
-            }
+            generateNotifications();
         }
 
         function checkNotificationsManually() {
-            if(alertasGlobais.length > 0) {
-                showToast(`Você possui ${alertasGlobais.length} notificações pendentes.`, 'warning');
-                document.getElementById('mainScroll').scrollTo(0,0);
-            } else {
-                showToast("Tudo em dia! Sem alertas.", "success");
+            toggleNotificationCenter();
+        }
+
+        function generateNotifications() {
+            let newNotifications = [];
+            const hoje = getLocalDateStr(0);
+            const amanha = getLocalDateStr(1);
+
+            function createNotif(modulo, idDoc, tipo, titulo, msg, detalhes, dataRef, serie) {
+                return {
+                    id: `${modulo}_${idDoc}_${tipo}`,
+                    modulo, registroId: idDoc, type: tipo, title: titulo, message: msg, details: detalhes,
+                    date: dataRef, serie: serie || '',
+                    read: readNotifIds.includes(`${modulo}_${idDoc}_${tipo}`)
+                };
             }
+
+            // 1. Pedidos
+            pedidos.filter(p => p.status === 'Pendente').forEach(p => {
+                if (!p.d_entrega) return;
+                if (p.d_entrega < hoje) {
+                    newNotifications.push(createNotif('pedidos', p.idDoc, 'urgent', `Pedido #${p.serie} atrasado`, `Atrasado há ${calculateDaysLate(p.d_entrega)} dias.`, `Obra: ${p.obra}`, p.d_entrega, p.serie));
+                } else if (p.d_entrega === hoje) {
+                    newNotifications.push(createNotif('pedidos', p.idDoc, 'today', `Pedido #${p.serie} vence hoje`, `Entrega prevista para hoje.`, `Obra: ${p.obra}`, p.d_entrega, p.serie));
+                } else if (p.d_entrega === amanha) {
+                    newNotifications.push(createNotif('pedidos', p.idDoc, 'tomorrow', `Pedido #${p.serie} vence amanhã`, `Entrega programada para amanhã.`, `Obra: ${p.obra}`, p.d_entrega, p.serie));
+                }
+            });
+
+            // 2. Pagamentos
+            pagamentos.filter(p => p.status === 'Pendente').forEach(p => {
+                if (!p.data) return;
+                if (p.data < hoje) {
+                    newNotifications.push(createNotif('pagamentos', p.idDoc, 'urgent', `Pagamento atrasado`, `Atrasado há ${calculateDaysLate(p.data)} dias.`, `Cliente: ${p.cliente}`, p.data, p.serie));
+                } else if (p.data === hoje) {
+                    newNotifications.push(createNotif('pagamentos', p.idDoc, 'today', `Pagamento vence hoje`, `Vencimento financeiro hoje.`, `Cliente: ${p.cliente}`, p.data, p.serie));
+                } else if (p.data === amanha) {
+                    newNotifications.push(createNotif('pagamentos', p.idDoc, 'tomorrow', `Pagamento vence amanhã`, `Vencimento programado.`, `Cliente: ${p.cliente}`, p.data, p.serie));
+                }
+            });
+
+            // 3. Compras
+            compras.filter(c => c.status === 'Pendente').forEach(c => {
+                if (!c.entrega) return;
+                if (c.entrega < hoje) {
+                    newNotifications.push(createNotif('compras', c.idDoc, 'urgent', `Compra atrasada`, `Atrasada há ${calculateDaysLate(c.entrega)} dias.`, `Obra: ${c.obra || '-'}`, c.entrega, c.obra));
+                } else if (c.entrega === hoje) {
+                    newNotifications.push(createNotif('compras', c.idDoc, 'today', `Compra chega hoje`, `Entrega prevista para hoje.`, `Obra: ${c.obra || '-'}`, c.entrega, c.obra));
+                } else if (c.entrega === amanha) {
+                    newNotifications.push(createNotif('compras', c.idDoc, 'tomorrow', `Compra chega amanhã`, `Entrega para amanhã.`, `Obra: ${c.obra || '-'}`, c.entrega, c.obra));
+                }
+            });
+
+            notificationsData = newNotifications;
+            updateNotificationUI();
+        }
+
+        function updateNotificationUI() {
+            const badge = document.getElementById('notifBadge');
+            const unreadCount = notificationsData.filter(n => !n.read).length;
+            
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            renderNotificationCenter();
+        }
+
+        function toggleNotificationCenter(forceClose = false) {
+            const panel = document.getElementById('notifCenterPanel');
+            const overlay = document.getElementById('notifCenterOverlay');
+            
+            const isClosed = panel.classList.contains('translate-x-full') || panel.classList.contains('opacity-0');
+            
+            if (forceClose || !isClosed) {
+                panel.classList.add('translate-x-full', 'sm:opacity-0', 'sm:scale-95');
+                panel.classList.remove('sm:translate-x-0');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    panel.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                }, 300);
+            } else {
+                renderNotificationCenter();
+                panel.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    panel.classList.remove('translate-x-full', 'sm:opacity-0', 'sm:scale-95');
+                    panel.classList.add('sm:translate-x-0');
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            }
+        }
+
+        function setNotifFilter(filter) {
+            currentNotifFilter = filter;
+            document.querySelectorAll('.nfilter-btn').forEach(b => {
+                b.classList.remove('bg-slate-800', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active-filter');
+                b.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-400');
+            });
+            
+            const activeBtn = document.getElementById(`nFilter-${filter}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active-filter');
+                activeBtn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-400');
+            }
+            renderNotificationCenter();
+        }
+
+        function renderNotificationCenter() {
+            const listEl = document.getElementById('notifList');
+            let filtered = notificationsData;
+
+            if (currentNotifFilter !== 'all') {
+                filtered = notificationsData.filter(n => n.type === currentNotifFilter);
+            }
+
+            // Atualiza contadores das abas
+            document.getElementById('nFilter-all').innerText = `Todas (${notificationsData.length})`;
+            document.getElementById('nFilter-urgent').innerText = `🔴 Urgentes (${notificationsData.filter(n => n.type === 'urgent').length})`;
+            document.getElementById('nFilter-today').innerText = `🟠 Hoje (${notificationsData.filter(n => n.type === 'today').length})`;
+            document.getElementById('nFilter-tomorrow').innerText = `🟡 Amanhã (${notificationsData.filter(n => n.type === 'tomorrow').length})`;
+
+            listEl.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-48 text-center text-slate-400 dark:text-slate-500">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 mb-3 opacity-50"></i>
+                        <p class="font-bold text-sm">Tudo em dia!</p>
+                        <p class="text-xs mt-1">Não existem pendências nesta categoria.</p>
+                    </div>
+                `;
+                lucide.createIcons({ root: listEl });
+                return;
+            }
+
+            // Ordena: Não lidas primeiro, depois por tipo (urgent, today, tomorrow)
+            const typeOrder = { 'urgent': 1, 'today': 2, 'tomorrow': 3 };
+            filtered.sort((a, b) => {
+                if(a.read === b.read) return typeOrder[a.type] - typeOrder[b.type];
+                return a.read ? 1 : -1;
+            });
+
+            filtered.forEach(n => {
+                let style = { i: '🟡', border: 'border-yellow-500', dot: 'bg-yellow-500' };
+                if (n.type === 'urgent') style = { i: '🔴', border: 'border-danger', dot: 'bg-danger' };
+                else if (n.type === 'today') style = { i: '🟠', border: 'border-alert', dot: 'bg-alert' };
+
+                const isUnread = !n.read;
+                const bgItem = isUnread ? 'bg-white dark:bg-darkCard' : 'bg-slate-50/50 dark:bg-slate-900/30 opacity-75';
+                const borderItem = isUnread ? `border-l-4 ${style.border}` : 'border-l-4 border-transparent';
+
+                let actionTxt = 'Ver pedido';
+                if(n.modulo === 'pagamentos') actionTxt = 'Ver pagamento';
+                if(n.modulo === 'compras') actionTxt = 'Ver compra';
+
+                listEl.innerHTML += `
+                    <div class="relative p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 ${bgItem} ${borderItem} transition-all hover:shadow-md group mb-2">
+                        ${isUnread ? `<span class="absolute top-3 right-3 w-2 h-2 rounded-full ${style.dot}"></span>` : ''}
+                        <div class="flex gap-3">
+                            <div class="text-lg shrink-0 mt-0.5">${style.i}</div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-black text-slate-800 dark:text-slate-200 truncate pr-4 ${isUnread ? '' : 'font-semibold opacity-90'}">${n.title}</h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">${n.message}</p>
+                                ${n.details ? `<p class="text-[10px] uppercase font-bold text-slate-500 mt-1.5">${n.details}</p>` : ''}
+                                
+                                <div class="mt-3 flex items-center justify-between">
+                                    <button onclick="verNotificacao('${n.id}', '${n.modulo}', '${n.serie}')" class="text-xs font-bold text-brand hover:text-brandHover dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1.5 rounded-md">
+                                        [${actionTxt}] <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                    </button>
+                                    ${isUnread ? `<button onclick="marcarLida('${n.id}')" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Marcar como lida</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons({ root: listEl });
+        }
+
+        window.verNotificacao = function(id, modulo, serieText) {
+            marcarLida(id, false);
+            toggleNotificationCenter(true);
+            switchTab(modulo);
+            
+            setTimeout(() => {
+                const searchInput = document.querySelector(`#content-${modulo} input[type="text"]`);
+                if (searchInput && serieText) {
+                    searchInput.value = serieText;
+                    filterGlobal(serieText);
+                }
+            }, 100);
+        }
+
+        window.marcarLida = function(id, updateRender = true) {
+            if (!readNotifIds.includes(id)) {
+                readNotifIds.push(id);
+                localStorage.setItem('neivas_read_notifs', JSON.stringify(readNotifIds));
+                const target = notificationsData.find(n => n.id === id);
+                if(target) target.read = true;
+                
+                if (updateRender) {
+                    updateNotificationUI();
+                }
+            }
+        }
+
+        window.markAllNotifsAsRead = function() {
+            notificationsData.forEach(n => {
+                if (!n.read) {
+                    n.read = true;
+                    if (!readNotifIds.includes(n.id)) readNotifIds.push(n.id);
+                }
+            });
+            localStorage.setItem('neivas_read_notifs', JSON.stringify(readNotifIds));
+            updateNotificationUI();
+            showToast("Todas as notificações marcadas como lidas.", "success");
         }
 
         // ==========================================
